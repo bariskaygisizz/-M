@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>Barış Store | Admin</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body{
+  margin:0;
+  font-family:Arial, sans-serif;
+  background:linear-gradient(135deg,#f58529,#dd2a7b,#8134af);
+  color:white;
+  text-align:center;
+}
+.container{max-width:420px;margin:auto;padding:20px}
+.card{
+  background:rgba(0,0,0,.35);
+  border-radius:25px;
+  padding:15px;
+  margin:15px 0;
+}
+input,button{
+  width:100%;
+  padding:12px;
+  margin:6px 0;
+  border:none;
+  border-radius:25px;
+}
+button{
+  background:#fff;
+  color:#000;
+  font-weight:bold;
+  cursor:pointer;
+}
+.link{
+  background:rgba(255,255,255,.15);
+  padding:10px;
+  border-radius:20px;
+  margin-top:10px;
+}
+small{opacity:.8}
+.share{
+  background:#00ffcc;
+  color:#000;
+}
+</style>
+</head>
+
+<body onclick="startMusic()">
+
+<audio id="music" loop>
+  <source src="https://files.freemusicarchive.org/storage-freemusicarchive-org/music/no_curator/Scott_Holmes_Music/Corporate__Motivational_Music/Scott_Holmes_Music_-_06_-_Upbeat_Party.mp3">
+</audio>
+
+<div class="container">
+<h1>🔧 Barış Store Admin</h1>
+
+<div class="card">
+<h3>🖼️ Logo / Profil Fotoğrafı</h3>
+<input id="logoInput" placeholder="Görsel URL">
+<button onclick="saveLogo()">Kaydet</button>
+<button onclick="removeLogo()">🗑️ Görseli Sil</button>
+</div>
+
+<div class="card">
+<h3>➕ Link Ekle</h3>
+<input id="title" placeholder="Link adı">
+<input id="url" placeholder="https://">
+<button onclick="addLink()">Ekle</button>
+</div>
+
+<div class="card">
+<h3>📋 Linkler</h3>
+<div id="list"></div>
+</div>
+
+<div class="card">
+<h3>🌍 Paylaş</h3>
+<button class="share" onclick="goPublic()">Halka Açık Siteyi Aç</button>
+</div>
+
+</div>
+
+<script>
+const music=document.getElementById("music");
+let links=JSON.parse(localStorage.getItem("links"))||[];
+
+function startMusic(){ music.play().catch(()=>{}); }
+
+function saveLogo(){
+  localStorage.setItem("logo",logoInput.value);
+  alert("Görsel kaydedildi");
+}
+
+function removeLogo(){
+  localStorage.removeItem("logo");
+  alert("Görsel silindi");
+}
+
+function addLink(){
+  if(!title.value||!url.value) return alert("Eksik bilgi");
+  links.unshift({title:title.value,url:url.value});
+  localStorage.setItem("links",JSON.stringify(links));
+  title.value=url.value="";
+  draw();
+}
+
+function editLink(i){
+  const t=prompt("Yeni başlık",links[i].title);
+  const u=prompt("Yeni URL",links[i].url);
+  if(!t||!u) return;
+  links[i]={title:t,url:u};
+  localStorage.setItem("links",JSON.stringify(links));
+  draw();
+}
+
+function removeLink(i){
+  if(!confirm("Silinsin mi?")) return;
+  links.splice(i,1);
+  localStorage.setItem("links",JSON.stringify(links));
+  draw();
+}
+
+function draw(){
+  list.innerHTML="";
+  links.forEach((l,i)=>{
+    list.innerHTML+=`
+      <div class="link">
+        <b>${l.title}</b><br>
+        <small>${l.url}</small><br><br>
+        <button onclick="editLink(${i})">✏️ Düzenle</button>
+        <button onclick="removeLink(${i})">❌ Sil</button>
+      </div>`;
+  });
+}
+draw();
+
+function goPublic(){
+  // kısa yükleniyor efekti
+  document.body.innerHTML = `
+    <div style="display:flex;justify-content:center;align-items:center;height:100vh;
+    background:linear-gradient(135deg,#f58529,#dd2a7b,#8134af);color:white;font-size:24px">
+    Yükleniyor...
+    </div>`;
+  setTimeout(()=>{
+    window.location.href="index.html";
+  },1500);
+}
+</script>
+
+</body>
+</html>
