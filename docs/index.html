@@ -7,48 +7,62 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="İstanbul Ulaşım" />
-  <meta name="theme-color" content="#e30a17" />
+  <meta name="theme-color" content="#0a0a0a" />
   <meta name="description" content="İstanbul toplu taşıma haritası: otobüs, metro, Marmaray, tramvay, vapur durakları ve İstanbulkart dolum noktaları" />
-  <title>İstanbul Ulaşım Haritası</title>
+  <title>İstanbul Ulaşım · Durak ve Dolum Noktası Haritası</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icon-192.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans:wght@400;500;700&display=swap" />
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div id="map"></div>
 
-  <!-- Üst arama çubuğu -->
+  <!-- Üst marka çubuğu: logo + dijital saat -->
+  <header class="hud-top">
+    <div class="brand">
+      <span class="brand-name">İSTANBUL ULAŞIM</span>
+      <span class="brand-sub">durak &amp; dolum haritası</span>
+    </div>
+    <div class="clock">
+      <span id="clock-time">--:--</span>
+      <span id="clock-date" class="clock-date"></span>
+    </div>
+  </header>
+
+  <!-- Arama -->
   <div class="top-search">
     <input id="search" type="search" placeholder="Durak, istasyon, hat ara..." autocomplete="off" enterkeyhint="search" />
-    <button id="btn-clear" class="clear-btn hidden" type="button" aria-label="Temizle">✕</button>
+    <button id="btn-clear" class="clear-btn hidden" type="button" aria-label="Temizle">×</button>
   </div>
 
-  <!-- Ulaşım türü çipleri (yatay kaydırma) -->
+  <!-- Ulaşım türü çipleri -->
   <div class="mode-bar">
     <div id="mode-filters" class="mode-scroll"></div>
   </div>
 
-  <!-- Sağ alt: konum butonu -->
+  <!-- Konum butonu -->
   <button id="btn-locate" class="fab" type="button" aria-label="Konumum">
-    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
       <circle cx="12" cy="12" r="3"/>
       <path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
       <circle cx="12" cy="12" r="8"/>
     </svg>
   </button>
 
-  <!-- Yakınlaştırma ipucu -->
   <div id="zoom-hint" class="zoom-hint hidden">Durakları görmek için yakınlaştırın</div>
 
-  <!-- Alt panel (bottom sheet) -->
+  <!-- Alt panel -->
   <div id="sheet" class="sheet collapsed">
     <button id="sheet-handle" class="sheet-handle" type="button" aria-label="Listeyi aç/kapat">
       <span class="grip"></span>
-      <span id="stats" class="sheet-title">Yükleniyor...</span>
+      <span id="stats" class="sheet-title">YÜKLENİYOR...</span>
     </button>
     <div id="location-list" class="sheet-list"></div>
-    <div class="sheet-footer">Veri: İBB Açık Veri • Harita: © OpenStreetMap</div>
+    <div class="sheet-footer">VERİ: İBB AÇIK VERİ · HARİTA: © OPENSTREETMAP © CARTO</div>
   </div>
 
   <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>

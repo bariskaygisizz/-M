@@ -1,14 +1,14 @@
-// İstanbul Ulaşım Haritası — mobil sürüm
+// İstanbul Ulaşım Haritası — koyu tema (istanbulasim.com tarzı)
 const MODE_STYLE = {
-  bus: { label: 'Otobüs', color: '#0071e3' },
-  metro: { label: 'Metro', color: '#e30a17' },
-  marmaray: { label: 'Marmaray', color: '#008c95' },
-  tram: { label: 'Tramvay', color: '#af52de' },
-  funicular: { label: 'Füniküler', color: '#ff9500' },
-  cablecar: { label: 'Teleferik', color: '#a2845e' },
-  ferry: { label: 'Vapur', color: '#004f9f' },
-  minibus: { label: 'Minibüs', color: '#34c759' },
-  kart: { label: 'İstanbulkart', color: '#ff2d55' }
+  bus: { label: 'Otobüs', color: '#4da3ff' },
+  metro: { label: 'Metro', color: '#ff5d5d' },
+  marmaray: { label: 'Marmaray', color: '#53eafd' },
+  tram: { label: 'Tramvay', color: '#c792ea' },
+  funicular: { label: 'Füniküler', color: '#ffd236' },
+  cablecar: { label: 'Teleferik', color: '#d7a97a' },
+  ferry: { label: 'Vapur', color: '#5ee9b5' },
+  minibus: { label: 'Minibüs', color: '#9ee37d' },
+  kart: { label: 'İstanbulkart', color: '#ff2d78' }
 };
 
 const DENSE_MODES = new Set(['bus', 'minibus', 'kart']);
@@ -46,20 +46,38 @@ const geolocate = new maplibregl.GeolocateControl({
 
 init();
 
+function startClock() {
+  const timeEl = document.getElementById('clock-time');
+  const dateEl = document.getElementById('clock-date');
+  const days = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
+  const tick = () => {
+    const now = new Date();
+    timeEl.textContent = now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+    dateEl.textContent = `${days[now.getDay()]} ${now.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit' })}`;
+  };
+  tick();
+  setInterval(tick, 15000);
+}
+
 function init() {
+  startClock();
   state.map = new maplibregl.Map({
     container: 'map',
     style: {
       version: 8,
       sources: {
-        osm: {
+        carto: {
           type: 'raster',
-          tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+          tiles: [
+            'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
+            'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
+            'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png'
+          ],
           tileSize: 256,
-          attribution: '© OpenStreetMap'
+          attribution: '© OpenStreetMap © CARTO'
         }
       },
-      layers: [{ id: 'osm', type: 'raster', source: 'osm' }]
+      layers: [{ id: 'carto', type: 'raster', source: 'carto' }]
     },
     center: [28.97953, 41.015137],
     zoom: 11,
@@ -123,10 +141,10 @@ function init() {
 }
 
 async function loadTransitData() {
-  els.stats.textContent = 'Veri yükleniyor...';
+  els.stats.textContent = 'VERİ YÜKLENİYOR...';
   const res = await fetch('transit.json');
   if (!res.ok) {
-    els.stats.textContent = 'Veri yüklenemedi';
+    els.stats.textContent = 'VERİ YÜKLENEMEDİ';
     return;
   }
   const data = await res.json();
@@ -183,15 +201,28 @@ function buildChips(summary) {
 
 function setupLayers() {
   state.map.addSource('stops', { type: 'geojson', data: emptyGeoJSON() });
+  // Neon parlama efekti: alt katman geniş yarı saydam halka
+  state.map.addLayer({
+    id: 'stops-glow',
+    type: 'circle',
+    source: 'stops',
+    paint: {
+      'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 8, 14, 13, 17, 20],
+      'circle-color': ['get', 'color'],
+      'circle-opacity': 0.25,
+      'circle-blur': 0.9
+    }
+  });
+
   state.map.addLayer({
     id: 'stops-circles',
     type: 'circle',
     source: 'stops',
     paint: {
-      'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 4, 14, 7, 17, 11],
+      'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 3.5, 14, 6, 17, 10],
       'circle-color': ['get', 'color'],
-      'circle-stroke-width': 2,
-      'circle-stroke-color': '#ffffff'
+      'circle-stroke-width': 1.5,
+      'circle-stroke-color': 'rgba(10,10,10,0.9)'
     }
   });
 
@@ -257,8 +288,8 @@ function refreshView() {
   state.map.getSource('stops').setData(stopsToGeoJSON(stops));
 
   els.stats.textContent = state.searchResults
-    ? `${stops.length.toLocaleString('tr-TR')} sonuç`
-    : `Görünümde ${stops.length.toLocaleString('tr-TR')} nokta`;
+    ? `${stops.length.toLocaleString('tr-TR')} SONUÇ`
+    : `GÖRÜNÜMDE ${stops.length.toLocaleString('tr-TR')} NOKTA`;
   renderList(stops.slice(0, 80));
 }
 
@@ -368,7 +399,7 @@ function showNearby() {
 
     state.searchResults = nearby;
     state.map.flyTo({ center: [lng, lat], zoom: 15 });
-    els.stats.textContent = `1,5 km içinde ${nearby.length} durak`;
+    els.stats.textContent = `1,5 KM İÇİNDE ${nearby.length} DURAK`;
     renderList(nearby.slice(0, 80));
     state.map.getSource('stops').setData(stopsToGeoJSON(nearby));
     els.sheet.classList.remove('collapsed');
