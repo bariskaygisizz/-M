@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "İstanbul Kart Harita",
+    "slug": "istanbul-kart-harita",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "scheme": "istanbulkart",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#e30a17"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.istanbulkart.harita",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Yakınınızdaki Biletmatik ve dolum noktalarını göstermek için konumunuza ihtiyaç duyuyoruz."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#e30a17"
+      },
+      "package": "com.istanbulkart.harita",
+      "permissions": ["ACCESS_COARSE_LOCATION", "ACCESS_FINE_LOCATION"]
+    },
+    "plugins": ["expo-router"],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
