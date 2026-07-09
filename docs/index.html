@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#ffffff" />
+  <meta name="description" content="İstanbul toplu taşıma haritası: otobüs, metro, Marmaray, tramvay, vapur durakları ve İstanbulkart dolum noktaları" />
+  <title>İstanbul Ulaşım Haritası</title>
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="top-bar">
+      <div class="brand">
+        <div class="brand-icon">İU</div>
+        <div>
+          <h1>İstanbul Ulaşım</h1>
+          <p>Otobüs • Metro • Marmaray • Vapur • İstanbulkart</p>
+        </div>
+      </div>
+    </header>
+
+    <div class="layout">
+      <aside class="sidebar glass">
+        <div class="search-block">
+          <label for="search">Durak / istasyon ara</label>
+          <input id="search" type="search" placeholder="Kadıköy, Mecidiyeköy, durak kodu..." autocomplete="off" />
+        </div>
+
+        <div class="search-block">
+          <label>Ulaşım türü</label>
+          <div id="mode-filters" class="chip-row"></div>
+        </div>
+
+        <div class="search-block">
+          <label>Diğer katmanlar</label>
+          <div class="chip-row">
+            <button id="chip-istanbulkart" class="chip" type="button">İstanbulkart Dolum</button>
+          </div>
+        </div>
+
+        <div class="button-row">
+          <button id="btn-search" class="btn btn-primary" type="button">Ara</button>
+          <button id="btn-nearby" class="btn btn-secondary" type="button">Yakınımdakiler</button>
+        </div>
+
+        <div id="stats" class="stats">Veri yükleniyor...</div>
+
+        <div id="location-list" class="location-list"></div>
+
+        <footer class="footer-note">
+          Veri: İBB Açık Veri (İETT GTFS, Raylı Sistemler, Toplu Ulaşım GTFS, BELBİM) • Harita: OpenStreetMap
+        </footer>
+      </aside>
+
+      <main class="map-panel">
+        <div id="map"></div>
+        <div id="zoom-hint" class="zoom-hint hidden">Durakları görmek için haritayı yakınlaştırın</div>
+      </main>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
