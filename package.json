@@ -5,6 +5,7 @@
   "description": "İstanbul Kart Biletmatik haritası — Apple (Swift/Vapor + SwiftUI)",
   "scripts": {
     "sync-data": "node server/scripts/sync-data.js",
+    "sync-transit": "node server/scripts/sync-transit.js",
     "server:legacy": "node server/index.js",
     "backend": "cd Backend && swift run App serve --hostname 0.0.0.0 --port 8080",
     "web:legacy": "npm run dev --prefix web"

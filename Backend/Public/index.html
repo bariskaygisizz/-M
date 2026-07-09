@@ -4,20 +4,20 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="theme-color" content="#ffffff" />
-  <title>İstanbul Kart Harita</title>
+  <meta name="description" content="İstanbul toplu taşıma haritası: otobüs, metro, Marmaray, tramvay, vapur durakları ve İstanbulkart dolum noktaları" />
+  <title>İstanbul Ulaşım Haritası</title>
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" />
   <link rel="stylesheet" href="/css/style.css" />
-  <script src="https://cdn.apple-mapkit.com/mk/5.x.x/mapkit.js" data-callback="initMapKit" async></script>
 </head>
 <body>
   <div class="app-shell">
     <header class="top-bar">
       <div class="brand">
-        <div class="brand-icon">IK</div>
+        <div class="brand-icon">İU</div>
         <div>
-          <h1>İstanbul Kart</h1>
-          <p>Biletmatik ve dolum noktaları</p>
+          <h1>İstanbul Ulaşım</h1>
+          <p>Otobüs • Metro • Marmaray • Vapur • İstanbulkart</p>
         </div>
       </div>
     </header>
@@ -25,24 +25,24 @@
     <div class="layout">
       <aside class="sidebar glass">
         <div class="search-block">
-          <label for="search">Ara</label>
-          <input id="search" type="search" placeholder="İlçe, terminal no..." autocomplete="off" />
+          <label for="search">Durak / istasyon ara</label>
+          <input id="search" type="search" placeholder="Kadıköy, Mecidiyeköy, durak kodu..." autocomplete="off" />
         </div>
 
         <div class="search-block">
-          <label for="district">İlçe</label>
-          <select id="district">
-            <option value="">Tüm ilçeler</option>
-          </select>
+          <label>Ulaşım türü</label>
+          <div id="mode-filters" class="chip-row"></div>
         </div>
 
         <div class="search-block">
-          <label>Nokta tipi</label>
-          <div id="type-filters" class="chip-row"></div>
+          <label>Diğer katmanlar</label>
+          <div class="chip-row">
+            <button id="chip-istanbulkart" class="chip" type="button">İstanbulkart Dolum</button>
+          </div>
         </div>
 
         <div class="button-row">
-          <button id="btn-filter" class="btn btn-primary" type="button">Filtrele</button>
+          <button id="btn-search" class="btn btn-primary" type="button">Ara</button>
           <button id="btn-nearby" class="btn btn-secondary" type="button">Yakınımdakiler</button>
         </div>
 
@@ -51,19 +51,18 @@
         <div id="location-list" class="location-list"></div>
 
         <footer class="footer-note">
-          Veri: İBB Açık Veri — BELBİM İstanbulkart Dolum Merkezi Bilgileri
+          Veri: İBB Açık Veri (İETT GTFS, Raylı Sistemler, Toplu Ulaşım GTFS, BELBİM) • Harita: OpenStreetMap
         </footer>
       </aside>
 
       <main class="map-panel">
         <div id="map"></div>
-        <div id="map-fallback" class="map-fallback hidden">
-          <p>Harita yüklenemedi. MapKit JS token yapılandırması için README dosyasına bakın.</p>
-        </div>
+        <div id="zoom-hint" class="zoom-hint hidden">Durakları görmek için haritayı yakınlaştırın</div>
       </main>
     </div>
   </div>
 
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
   <script src="/js/app.js"></script>
 </body>
 </html>

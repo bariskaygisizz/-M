@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_FILE = path.join(__dirname, '../data/locations.json');
+const TRANSIT_FILE = path.join(__dirname, '../data/transit.json');
 const PORT = process.env.PORT || 3001;
 
 const app = express();
@@ -17,6 +18,14 @@ function loadData() {
     return null;
   }
   return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
+}
+
+let transitCache = null;
+function loadTransit() {
+  if (transitCache) return transitCache;
+  if (!fs.existsSync(TRANSIT_FILE)) return null;
+  transitCache = JSON.parse(fs.readFileSync(TRANSIT_FILE, 'utf8'));
+  return transitCache;
 }
 
 function haversineKm(lat1, lng1, lat2, lng2) {
@@ -94,6 +103,81 @@ app.get('/api/locations', (req, res) => {
     total: results.length,
     summary: data.summary,
     locations: results.slice(0, maxLimit)
+  });
+});
+
+app.get('/api/transit/meta', (_req, res) => {
+  const data = loadTransit();
+  if (!data) {
+    return res.status(503).json({
+      error: 'Toplu taşıma verisi yok. Önce npm run sync-transit çalıştırın.'
+    });
+  }
+  res.json({
+    updatedAt: data.updatedAt,
+    source: data.source,
+    total: data.total,
+    summary: data.summary,
+    modes: data.modes
+  });
+});
+
+app.get('/api/transit/stops', (req, res) => {
+  const data = loadTransit();
+  if (!data) {
+    return res.status(503).json({
+      error: 'Toplu taşıma verisi yok. Önce npm run sync-transit çalıştırın.'
+    });
+  }
+
+  const { mode, q, lat, lng, radiusKm = '1', limit = '500', bbox } = req.query;
+  let results = data.stops;
+
+  if (mode) {
+    const modes = new Set(String(mode).split(',').map((m) => m.trim()));
+    results = results.filter((stop) => modes.has(stop.mode));
+  }
+
+  if (q) {
+    const query = String(q).toLocaleLowerCase('tr');
+    results = results.filter((stop) => {
+      const haystack = [stop.name, stop.line, stop.direction, stop.code]
+        .filter(Boolean)
+        .join(' ')
+        .toLocaleLowerCase('tr');
+      return haystack.includes(query);
+    });
+  }
+
+  // bbox=minLng,minLat,maxLng,maxLat — harita görünümüne göre filtre
+  if (bbox) {
+    const [minLng, minLat, maxLng, maxLat] = String(bbox).split(',').map(Number);
+    if ([minLng, minLat, maxLng, maxLat].every(Number.isFinite)) {
+      results = results.filter(
+        (s) => s.lng >= minLng && s.lng <= maxLng && s.lat >= minLat && s.lat <= maxLat
+      );
+    }
+  }
+
+  const userLat = lat ? Number(lat) : null;
+  const userLng = lng ? Number(lng) : null;
+  const maxRadius = Number(radiusKm);
+  const maxLimit = Math.min(Number(limit) || 500, 3000);
+
+  if (Number.isFinite(userLat) && Number.isFinite(userLng)) {
+    results = results
+      .map((stop) => ({
+        ...stop,
+        distanceKm: haversineKm(userLat, userLng, stop.lat, stop.lng)
+      }))
+      .filter((stop) => !Number.isFinite(maxRadius) || stop.distanceKm <= maxRadius)
+      .sort((a, b) => a.distanceKm - b.distanceKm);
+  }
+
+  res.json({
+    updatedAt: data.updatedAt,
+    total: results.length,
+    stops: results.slice(0, maxLimit)
   });
 });
 

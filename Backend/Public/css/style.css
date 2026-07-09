@@ -118,12 +118,31 @@ input, select {
   font-size: 0.78rem;
   cursor: pointer;
   transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chip .dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.chip small {
+  color: var(--apple-muted);
+  font-size: 0.68rem;
 }
 
 .chip.active {
   background: var(--apple-blue);
   border-color: var(--apple-blue);
   color: white;
+}
+
+.chip.active small {
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .button-row {
@@ -221,6 +240,26 @@ input, select {
   text-align: center;
   background: #ececf0;
   color: var(--apple-muted);
+}
+
+.zoom-hint {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(29, 29, 31, 0.85);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.popup {
+  font-family: inherit;
+  font-size: 0.85rem;
+  line-height: 1.5;
 }
 
 .hidden { display: none !important; }
