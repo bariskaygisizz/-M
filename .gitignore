@@ -3,6 +3,8 @@ dist/
 .expo/
 .expo-shared/
 web/dist/
+web/node_modules/
+Backend/.build/
 *.log
 .DS_Store
 .env

@@ -1,82 +1,101 @@
-# İstanbul Kart Harita
+# İstanbul Kart Harita (Apple)
 
-İstanbul Kart **Biletmatik** ve **dolum noktalarını** haritada gösteren web ve mobil uygulama.
+İstanbul Kart **Biletmatik** ve **dolum noktalarını** haritada gösteren **native Apple** web sitesi ve iOS uygulaması.
 
-Veriler [İBB Açık Veri Portalı](https://data.ibb.gov.tr/dataset/istanbulkart-dolum-merkezi-bilgileri) üzerinden BELBİM tarafından yayınlanan İstanbulkart dolum merkezi bilgilerinden alınır.
-
-## Özellikler
-
-- Haritada Biletmatik, Biletmatik 4, bayi ve dolum merkezi noktaları
-- İlçe ve anahtar kelime ile arama
-- Nokta tipine göre filtreleme
-- Konumunuza göre yakındaki noktaları listeleme
-- Web (masaüstü/mobil tarayıcı) ve React Native (Expo) mobil uygulama
+| Platform | Teknoloji |
+|----------|-----------|
+| **Web sitesi** | Vapor (Swift) + MapKit JS + Apple tasarım dili |
+| **iOS uygulaması** | SwiftUI + MapKit + CoreLocation |
+| **Veri** | İBB Açık Veri (BELBİM) |
 
 ## Proje yapısı
 
 ```
-├── data/locations.json      # Senkronize edilmiş konum verisi
-├── server/                  # Express API
-├── web/                     # React + Leaflet web uygulaması
-└── mobile/                  # Expo React Native mobil uygulama
+├── Backend/          # Vapor Swift API + Apple tasarımlı web sitesi
+├── ios/              # SwiftUI iOS uygulaması (Xcode)
+├── data/             # Konum verisi (JSON)
+└── server/scripts/   # Veri senkronizasyon scripti (Node)
 ```
+
+## Gereksinimler
+
+- macOS 13+ (Vapor sunucu ve iOS geliştirme için)
+- Xcode 15+ (iOS uygulaması)
+- Swift 5.9+
+- Node.js (yalnızca veri senkronizasyonu için)
 
 ## Kurulum
 
-```bash
-# Bağımlılıkları yükle
-npm run install:all
+### 1. Veriyi indir
 
-# İBB'den güncel veriyi çek
+```bash
 npm run sync-data
-
-# API sunucusunu başlat (port 3001)
-npm run server
 ```
 
-Ayrı bir terminalde web uygulaması:
+### 2. Vapor sunucusunu başlat
 
 ```bash
-npm run web
+cd Backend
+swift build
+swift run App serve --hostname 0.0.0.0 --port 8080
 ```
 
-Tarayıcıda: http://localhost:5173
+Web sitesi: http://localhost:8080  
+API: http://localhost:8080/api
 
-## Mobil uygulama
+### 3. iOS uygulamasını çalıştır
 
-API sunucusu çalışırken:
+1. `ios/IstanbulKartHarita.xcodeproj` dosyasını Xcode ile açın
+2. Simulator veya fiziksel iPhone seçin
+3. Run (⌘R)
+
+Simulator varsayılan API adresi: `http://localhost:8080/api`
+
+Fiziksel cihazda Mac IP adresinizi kullanın. Uygulama içinde `UserDefaults` ile `apiBaseURL` ayarlanabilir veya `APIClient.swift` dosyasını güncelleyin.
+
+## MapKit JS (Web haritası)
+
+Web sitesi Apple **MapKit JS** kullanır. Haritanın çalışması için Apple Developer hesabından Maps token almanız gerekir:
+
+1. [Apple Developer Maps](https://developer.apple.com/account/resources/services/maps) üzerinden Maps Identifier oluşturun
+2. JWT token üretin
+3. Sunucuyu token ile başlatın:
 
 ```bash
-cd mobile
-EXPO_PUBLIC_API_URL=http://<bilgisayar-ip>:3001/api npm start
+MAPKIT_JS_TOKEN="your-mapkit-js-token" swift run App serve --port 8080
 ```
 
-Fiziksel cihazda test ederken `localhost` yerine bilgisayarınızın yerel IP adresini kullanın.
+Token yoksa site açılır ancak harita alanı yapılandırma uyarısı gösterir; liste ve filtreler çalışmaya devam eder.
 
 ## API uç noktaları
 
 | Endpoint | Açıklama |
 |----------|----------|
 | `GET /api/health` | Sağlık kontrolü |
-| `GET /api/meta` | İlçe listesi, tipler, özet |
-| `GET /api/locations` | Filtrelenmiş konum listesi |
+| `GET /api/config` | MapKit JS yapılandırması |
+| `GET /api/meta` | İlçe/tip listesi |
+| `GET /api/locations` | Filtrelenmiş konumlar |
 
 ### `/api/locations` parametreleri
 
-- `type` — Virgülle ayrılmış tipler (ör. `Biletmatik,Biletmatik 4`)
-- `district` — İlçe adı
-- `q` — Arama metni
-- `lat`, `lng`, `radiusKm` — Yakındaki noktalar
-- `limit` — Maksimum sonuç (varsayılan 200)
+- `type` — Virgülle ayrılmış tipler
+- `district` — İlçe
+- `q` — Arama
+- `lat`, `lng`, `radiusKm` — Yakınlık sorgusu
+- `limit` — Sonuç limiti
 
-## Veri güncelleme
+## iOS özellikleri
 
-```bash
-npm run sync-data
-```
+- SwiftUI + native MapKit harita
+- CoreLocation ile yakındaki noktalar
+- Apple Haritalar'da yol tarifi linki
+- İlçe/tip filtreleme ve arama
+- Harita ve liste sekmeleri
 
-Script, İBB CKAN API üzerinden 2023–2025 veri setlerini birleştirir ve `data/locations.json` dosyasını oluşturur.
+## Veri kaynağı
 
-## Lisans
+[İBB — İstanbulkart Dolum Merkezi Bilgileri](https://data.ibb.gov.tr/dataset/istanbulkart-dolum-merkezi-bilgileri)
 
-Konum verisi: İstanbul Büyükşehir Belediyesi Açık Veri Lisansı (BELBİM / İBB).
+## Eski sürüm
+
+Önceki React/Expo sürümü `web/` ve `mobile/` klasörlerinde duruyor. Yeni geliştirme **Backend/** ve **ios/** üzerinden yapılmalıdır.
