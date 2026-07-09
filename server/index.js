@@ -33,6 +33,14 @@ app.get('/api/health', (_req, res) => {
   res.json({ ok: true, service: 'istanbul-kart-harita-api' });
 });
 
+app.get('/api/config', (_req, res) => {
+  const token = process.env.MAPKIT_JS_TOKEN;
+  res.json({
+    mapKitJSTokenConfigured: Boolean(token),
+    mapKitJSKey: token || null
+  });
+});
+
 app.get('/api/locations', (req, res) => {
   const data = loadData();
   if (!data) {
@@ -112,14 +120,18 @@ app.get('/api/meta', (_req, res) => {
   });
 });
 
+const APPLE_WEB = path.join(__dirname, '../Backend/Public');
 const WEB_DIST = path.join(__dirname, '../web/dist');
-if (fs.existsSync(WEB_DIST)) {
-  app.use(express.static(WEB_DIST));
-  app.get('*', (_req, res) => {
-    res.sendFile(path.join(WEB_DIST, 'index.html'));
+const staticRoot = fs.existsSync(APPLE_WEB) ? APPLE_WEB : WEB_DIST;
+
+if (fs.existsSync(staticRoot)) {
+  app.use(express.static(staticRoot));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) return next();
+    res.sendFile(path.join(staticRoot, 'index.html'));
   });
 }
 
 app.listen(PORT, () => {
-  console.log(`API http://localhost:${PORT} üzerinde çalışıyor`);
+  console.log(`Uygulama http://localhost:${PORT} üzerinde çalışıyor`);
 });
