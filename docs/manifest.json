@@ -1,0 +1,22 @@
+{
+  "name": "İstanbul Ulaşım Haritası",
+  "short_name": "İstanbul Ulaşım",
+  "description": "Otobüs, metro, Marmaray, vapur durakları ve İstanbulkart dolum noktaları",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#e30a17",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
