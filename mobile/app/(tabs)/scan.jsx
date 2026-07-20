@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -11,7 +11,7 @@ import {
 import { CameraView, useCameraPermissions } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { identifyImage } from "../../lib/api";
+import { identifyImage, fetchFish } from "../../lib/api";
 import { useRouter } from "expo-router";
 
 export default function ScanScreen() {
@@ -20,17 +20,34 @@ export default function ScanScreen() {
   const [busy, setBusy] = useState(false);
   const [preview, setPreview] = useState(null);
   const [result, setResult] = useState(null);
+  const [selected, setSelected] = useState(null);
+  const [catalog, setCatalog] = useState([]);
   const [error, setError] = useState("");
   const router = useRouter();
+
+  useEffect(() => {
+    fetchFish()
+      .then((d) => setCatalog(d.items || []))
+      .catch(() => {});
+  }, []);
+
+  const resolveFish = (id) => {
+    if (result?.match?.id === id) return result.match;
+    return catalog.find((f) => f.id === id) || null;
+  };
 
   const run = async (uri) => {
     setBusy(true);
     setError("");
     setResult(null);
+    setSelected(null);
     setPreview(uri);
     try {
       const json = await identifyImage(uri);
       setResult(json);
+      if (json.match && !json.needsConfirm && json.isFish !== false) {
+        setSelected(json.match);
+      }
     } catch (err) {
       setError(err.message || "Tanıma başarısız");
     } finally {
@@ -40,7 +57,7 @@ export default function ScanScreen() {
 
   const takePhoto = async () => {
     const photo = await cameraRef.current?.takePictureAsync({
-      quality: 0.85,
+      quality: 0.9,
       skipProcessing: true,
     });
     if (photo?.uri) await run(photo.uri);
@@ -49,7 +66,7 @@ export default function ScanScreen() {
   const pick = async () => {
     const res = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.85,
+      quality: 0.9,
     });
     if (!res.canceled && res.assets?.[0]?.uri) await run(res.assets[0].uri);
   };
@@ -57,7 +74,7 @@ export default function ScanScreen() {
   if (!permission) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator color={colors.accent} />
+        <ActivityIndicator color="#2edcc8" />
       </View>
     );
   }
@@ -67,21 +84,36 @@ export default function ScanScreen() {
       <SafeAreaView style={styles.center}>
         <Text style={styles.title}>Kamera izni gerekli</Text>
         <Text style={styles.sub}>
-          Balığı tanımak için kameraya erişim verin veya galeriden seçin.
+          Balığı tanımak için kamera veya galeri kullanın.
         </Text>
         <Pressable style={styles.cta} onPress={requestPermission}>
           <Text style={styles.ctaText}>İzin Ver</Text>
         </Pressable>
         <Pressable style={[styles.cta, styles.ghost]} onPress={pick}>
-          <Text style={[styles.ctaText, { color: colors.brand }]}>Galeriden Seç</Text>
+          <Text style={[styles.ctaText, { color: "#2edcc8" }]}>Galeriden Seç</Text>
         </Pressable>
       </SafeAreaView>
     );
   }
 
+  const candidates = [];
+  if (result?.match) {
+    candidates.push({
+      id: result.match.id,
+      name: result.match.name,
+      confidence: result.confidence,
+    });
+  }
+  for (const a of result?.alternatives || []) {
+    if (!candidates.some((c) => c.id === a.id)) candidates.push(a);
+  }
+
   return (
     <SafeAreaView style={styles.safe} edges={["bottom"]}>
       <ScrollView contentContainerStyle={styles.content}>
+        <Text style={styles.hint}>
+          Balığı yakından, iyi ışıkta çek. Emin değilse adaylardan sen seç.
+        </Text>
         <View style={styles.viewport}>
           {preview ? (
             <Image source={{ uri: preview }} style={styles.preview} />
@@ -98,55 +130,94 @@ export default function ScanScreen() {
             onPress={takePhoto}
             disabled={busy || !!preview}
           >
-            <Text style={styles.ctaText}>{busy ? "AI analiz…" : "Tara & Tanı"}</Text>
+            <Text style={styles.ctaText}>
+              {busy ? "CLIP analiz ediyor…" : "Tara & Tanı"}
+            </Text>
           </Pressable>
           <Pressable
             style={[styles.cta, styles.ghost]}
             onPress={() => {
               setPreview(null);
               setResult(null);
+              setSelected(null);
               setError("");
             }}
           >
-            <Text style={[styles.ctaText, { color: colors.brand }]}>Kameraya Dön</Text>
+            <Text style={[styles.ctaText, { color: "#2edcc8" }]}>Kameraya Dön</Text>
           </Pressable>
           <Pressable style={[styles.cta, styles.ghost]} onPress={pick}>
-            <Text style={[styles.ctaText, { color: colors.brand }]}>Galeri</Text>
+            <Text style={[styles.ctaText, { color: "#2edcc8" }]}>Galeri</Text>
           </Pressable>
         </View>
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
 
-        {result?.match ? (
+        {result?.isFish === false ? (
+          <View style={styles.result}>
+            <Text style={styles.conf}>Balık tespit edilemedi</Text>
+            <Text style={styles.notes}>{result.notes}</Text>
+            {(catalog || []).slice(0, 8).map((f) => (
+              <Pressable
+                key={f.id}
+                style={styles.candidate}
+                onPress={() => setSelected(f)}
+              >
+                <Text style={styles.candidateText}>{f.name}</Text>
+              </Pressable>
+            ))}
+          </View>
+        ) : null}
+
+        {result?.isFish !== false && candidates.length > 0 ? (
           <View style={styles.result}>
             <Text style={styles.conf}>
               %{result.confidence} · {result.engine}
+              {result.needsConfirm ? " · onay gerekli" : ""}
             </Text>
-            <Text style={styles.name}>{result.match.name}</Text>
             <Text style={styles.notes}>{result.notes}</Text>
+            <Text style={styles.blockTitle}>Doğru türü seç</Text>
+            {candidates.map((c) => (
+              <Pressable
+                key={c.id}
+                style={[
+                  styles.candidate,
+                  selected?.id === c.id && styles.candidateActive,
+                ]}
+                onPress={() => setSelected(resolveFish(c.id))}
+              >
+                <Text style={styles.candidateText}>
+                  %{c.confidence} · {c.name}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        ) : null}
+
+        {selected ? (
+          <View style={styles.result}>
+            <Text style={styles.name}>{selected.name}</Text>
             <Text style={styles.meta}>
-              {result.match.calories} kcal/100g · {result.match.avgWeight}
+              {selected.calories} kcal/100g · {selected.avgWeight}
             </Text>
-            <Text style={styles.meta}>{result.match.regions.join(" · ")}</Text>
+            <Text style={styles.meta}>{selected.regions.join(" · ")}</Text>
             <Text style={styles.blockTitle}>Faydalar</Text>
-            {result.match.benefits.slice(0, 3).map((b) => (
+            {selected.benefits.slice(0, 3).map((b) => (
               <Text key={b} style={styles.bullet}>
                 + {b}
               </Text>
             ))}
             <Text style={styles.blockTitle}>Dikkat</Text>
-            {result.match.harms.slice(0, 3).map((b) => (
+            {selected.harms.slice(0, 3).map((b) => (
               <Text key={b} style={styles.bullet}>
                 ! {b}
               </Text>
             ))}
             <Pressable
               style={styles.cta}
-              onPress={() => router.push(`/fish/${result.match.id}`)}
+              onPress={() => router.push(`/fish/${selected.id}`)}
             >
               <Text style={styles.ctaText}>Tüm özellikleri aç</Text>
             </Pressable>
-            <Text style={styles.disclaimer}>{result.disclaimer}</Text>
           </View>
         ) : null}
       </ScrollView>
@@ -166,6 +237,7 @@ const styles = StyleSheet.create({
   },
   title: { color: "#fff", fontSize: 20, fontWeight: "800", marginBottom: 8 },
   sub: { color: "#8a9aa0", textAlign: "center", marginBottom: 16 },
+  hint: { color: "#8a9aa0", marginBottom: 10, fontSize: 13 },
   viewport: {
     height: 420,
     borderRadius: 22,
@@ -207,9 +279,9 @@ const styles = StyleSheet.create({
     borderColor: "rgba(255,255,255,0.08)",
     backgroundColor: "rgba(18,22,24,0.9)",
   },
-  conf: { color: "#2edcc8", fontFamily: undefined, fontWeight: "700" },
+  conf: { color: "#2edcc8", fontWeight: "700" },
   name: { color: "#fff", fontSize: 26, fontWeight: "800", marginVertical: 6 },
-  notes: { color: "#8a9aa0", marginBottom: 8 },
+  notes: { color: "#8a9aa0", marginBottom: 8, marginTop: 6 },
   meta: { color: "#7cf0e0", marginBottom: 4, fontWeight: "600" },
   blockTitle: {
     color: "#fff",
@@ -218,5 +290,13 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   bullet: { color: "#e8eef0", marginBottom: 4, lineHeight: 20 },
-  disclaimer: { color: "#8a9aa0", fontSize: 12, marginTop: 12, lineHeight: 18 },
+  candidate: {
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 8,
+  },
+  candidateActive: { borderColor: "#2edcc8" },
+  candidateText: { color: "#fff", fontWeight: "700" },
 });

@@ -1,51 +1,49 @@
+import fs from "fs";
+import os from "os";
+import path from "path";
 import jpeg from "jpeg-js";
 import { PNG } from "pngjs";
-import { fishList } from "../data/fish.js";
+import { fishList, getFishById } from "../data/fish.js";
 
 function clamp(n, a, b) {
   return Math.max(a, Math.min(b, n));
 }
 
-function rgbToHsl(r, g, b) {
-  r /= 255;
-  g /= 255;
-  b /= 255;
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-  const l = (max + min) / 2;
-  if (max === min) return { h: 0, s: 0, l };
-  const d = max - min;
-  const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-  let h = 0;
-  switch (max) {
-    case r:
-      h = (g - b) / d + (g < b ? 6 : 0);
-      break;
-    case g:
-      h = (b - r) / d + 2;
-      break;
-    default:
-      h = (r - g) / d + 4;
-  }
-  h /= 6;
-  return { h: h * 360, s, l };
-}
+/** CLIP için İngilizce görsel etiketler — tanıma isabetini artırır */
+export const CLIP_LABELS = {
+  hamsi: "a photo of a small silver European anchovy fish (hamsi)",
+  levrek: "a photo of a European seabass fish (levrek) silver body",
+  cipura: "a photo of a gilt-head bream fish (çipura) with gold spot",
+  lufer: "a photo of a bluefish (lüfer) dark blue back silver belly",
+  palamut: "a photo of an Atlantic bonito fish (palamut) with stripes",
+  alabalik: "a photo of a rainbow trout fish (alabalık) with spots",
+  somon: "a photo of a raw salmon fish fillet orange pink flesh",
+  ton: "a photo of a tuna fish steak red meat (ton balığı)",
+  sardalya: "a photo of sardines fish (sardalya) small oily silver",
+  kalkan: "a photo of a turbot flatfish (kalkan) brown top",
+  istavrit: "a photo of a horse mackerel fish (istavrit)",
+  mezgit: "a photo of a whiting white fish (mezgit) pale body",
+  uskumru: "a photo of an Atlantic mackerel fish (uskumru) wavy stripes",
+  barbunya: "a photo of a red mullet fish (barbunya) reddish body",
+  mercan: "a photo of a common pandora fish (mercan) pinkish",
+  cinekop: "a photo of a young bluefish (çinekop) small bluefish",
+};
 
-function hueBucket(h, s, l) {
-  if (l < 0.18) return "dark";
-  if (l > 0.82 && s < 0.2) return "white";
-  if (s < 0.12) return l > 0.55 ? "silver" : "gray";
-  if (h < 20 || h >= 340) return "red";
-  if (h < 45) return "orange";
-  if (h < 70) return "gold";
-  if (h < 100) return "yellow";
-  if (h < 150) return "green";
-  if (h < 175) return "olive";
-  if (h < 200) return "cyan";
-  if (h < 255) return "blue";
-  if (h < 290) return "bluegray";
-  if (h < 330) return "pink";
-  return "rose";
+const NOT_FISH = "a photo of something that is not a fish (plate, hand, table, phone)";
+
+let clipPipelinePromise = null;
+
+async function getClip() {
+  if (!clipPipelinePromise) {
+    clipPipelinePromise = (async () => {
+      const { pipeline } = await import("@xenova/transformers");
+      return pipeline(
+        "zero-shot-image-classification",
+        "Xenova/clip-vit-base-patch32"
+      );
+    })();
+  }
+  return clipPipelinePromise;
 }
 
 function decodeImage(buffer, mime) {
@@ -58,107 +56,21 @@ function decodeImage(buffer, mime) {
   return { width: jpg.width, height: jpg.height, data: jpg.data };
 }
 
-function analyzePixels(width, height, data) {
-  const step = Math.max(1, Math.floor(Math.sqrt((width * height) / 4000)));
-  const counts = {};
-  let satSum = 0;
-  let briSum = 0;
-  let samples = 0;
-  let edgeish = 0;
-
-  for (let y = 0; y < height; y += step) {
-    for (let x = 0; x < width; x += step) {
-      const i = (y * width + x) * 4;
-      const r = data[i];
-      const g = data[i + 1];
-      const b = data[i + 2];
-      const a = data[i + 3];
-      if (a < 30) continue;
-      const { h, s, l } = rgbToHsl(r, g, b);
-      const bucket = hueBucket(h, s, l);
-      counts[bucket] = (counts[bucket] || 0) + 1;
-      satSum += s;
-      briSum += l;
-      samples += 1;
-      if (x + step < width) {
-        const j = (y * width + (x + step)) * 4;
-        const dr = Math.abs(r - data[j]);
-        const dg = Math.abs(g - data[j + 1]);
-        const db = Math.abs(b - data[j + 2]);
-        if (dr + dg + db > 80) edgeish += 1;
-      }
-    }
-  }
-
-  if (!samples) {
-    return {
-      topHues: ["silver"],
-      saturation: "mid",
-      brightness: "mid",
-      sizeBias: "medium",
-      edgeRatio: 0.2,
-    };
-  }
-
-  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
-  const topHues = sorted.slice(0, 3).map(([k]) => k);
-  const avgS = satSum / samples;
-  const avgL = briSum / samples;
-  const aspect = width / Math.max(height, 1);
-  let sizeBias = "medium";
-  if (aspect > 2.2 || aspect < 0.45) sizeBias = "small";
-  if (width * height > 900_000 && aspect > 1.2 && aspect < 2.0) sizeBias = "large";
-
-  return {
-    topHues,
-    saturation: avgS > 0.42 ? "high" : avgS > 0.2 ? "mid" : "low",
-    brightness: avgL > 0.62 ? "high" : avgL > 0.35 ? "mid" : "low",
-    sizeBias,
-    edgeRatio: edgeish / samples,
-    samples,
-  };
-}
-
-function scoreFish(fish, features) {
-  const v = fish.visual;
-  let score = 0;
-  const reasons = [];
-
-  for (const hue of features.topHues) {
-    if (v.hues.includes(hue)) {
-      score += hue === features.topHues[0] ? 34 : 14;
-      reasons.push(`${hue} ton eşleşmesi`);
-    }
-  }
-  if (v.saturation === features.saturation) {
-    score += 12;
-    reasons.push("doygunluk uyumu");
-  }
-  if (v.brightness === features.brightness) {
-    score += 12;
-    reasons.push("parlaklık uyumu");
-  }
-  if (v.sizeBias === features.sizeBias) {
-    score += 16;
-    reasons.push("boyut profili");
-  } else if (
-    (v.sizeBias === "medium" && features.sizeBias !== "large") ||
-    (features.sizeBias === "medium" && v.sizeBias !== "large")
-  ) {
-    score += 6;
-  }
-
-  // slight prior for common Turkish market fish
-  if (["hamsi", "levrek", "cipura", "istavrit"].includes(fish.id)) score += 3;
-
-  return { score: clamp(score, 0, 100), reasons };
+function writeTempImage(buffer, mime) {
+  const ext = (mime || "").includes("png") ? "png" : "jpg";
+  const file = path.join(
+    os.tmpdir(),
+    `balikatlas-${Date.now()}-${Math.random().toString(16).slice(2)}.${ext}`
+  );
+  fs.writeFileSync(file, buffer);
+  return file;
 }
 
 async function identifyWithOpenAI(base64, mime) {
   const key = process.env.OPENAI_API_KEY;
   if (!key) return null;
 
-  const names = fishList.map((f) => f.name).join(", ");
+  const names = fishList.map((f) => `${f.id}:${f.name}`).join(", ");
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -167,21 +79,17 @@ async function identifyWithOpenAI(base64, mime) {
     },
     body: JSON.stringify({
       model: process.env.OPENAI_VISION_MODEL || "gpt-4o-mini",
-      temperature: 0.1,
+      temperature: 0,
       response_format: { type: "json_object" },
       messages: [
         {
           role: "system",
-          content:
-            "Sen bir balık tanıma asistanısın. Sadece verilen Türk balık listesinden seç. JSON döndür: {idGuess:string|null, name:string, confidence:number, notes:string}",
+          content: `Balık tanı. Sadece bu listeden id seç: ${names}. JSON: {"id":"hamsi|null","confidence":0-100,"isFish":true|false,"notes":"..."}`,
         },
         {
           role: "user",
           content: [
-            {
-              type: "text",
-              text: `Bu görseldeki balığı tanı. Adaylar: ${names}. Bilmiyorsan en yakınını seç.`,
-            },
+            { type: "text", text: "Görseldeki balığı tanı. Balık değilse isFish:false." },
             {
               type: "image_url",
               image_url: { url: `data:${mime};base64,${base64}` },
@@ -191,101 +99,187 @@ async function identifyWithOpenAI(base64, mime) {
       ],
     }),
   });
-
   if (!res.ok) return null;
   const json = await res.json();
-  const text = json.choices?.[0]?.message?.content;
-  if (!text) return null;
   try {
-    return JSON.parse(text);
+    return JSON.parse(json.choices?.[0]?.message?.content || "{}");
   } catch {
     return null;
   }
 }
 
-export async function identifyFishFromBuffer(buffer, mime = "image/jpeg") {
-  const started = Date.now();
-  const base64 = buffer.toString("base64");
+async function identifyWithClip(tmpFile) {
+  const clip = await getClip();
+  const candidateIds = Object.keys(CLIP_LABELS);
+  const labels = [...candidateIds.map((id) => CLIP_LABELS[id]), NOT_FISH];
+  const raw = await clip(tmpFile, labels);
 
-  let vision = null;
-  try {
-    vision = await identifyWithOpenAI(base64, mime);
-  } catch {
-    vision = null;
-  }
-
-  let decoded;
-  try {
-    decoded = decodeImage(buffer, mime);
-  } catch (err) {
-    return {
-      ok: false,
-      error: "Görüntü okunamadı. JPG veya PNG deneyin.",
-      detail: String(err.message || err),
-    };
-  }
-
-  const features = analyzePixels(decoded.width, decoded.height, decoded.data);
-  const ranked = fishList
-    .map((fish) => {
-      const { score, reasons } = scoreFish(fish, features);
-      return { fish, score, reasons };
+  const scored = raw
+    .map((row) => {
+      const label = row.label;
+      const id = candidateIds.find((cid) => CLIP_LABELS[cid] === label);
+      return {
+        id: id || null,
+        notFish: label === NOT_FISH,
+        score: Number(row.score) || 0,
+      };
     })
     .sort((a, b) => b.score - a.score);
 
-  if (vision?.name) {
-    const hit =
-      fishList.find(
-        (f) =>
-          f.name.toLocaleLowerCase("tr-TR") ===
-            String(vision.name).toLocaleLowerCase("tr-TR") ||
-          f.id === vision.idGuess
-      ) || null;
-    if (hit) {
-      const conf = clamp(Number(vision.confidence) || 78, 45, 98);
+  return scored;
+}
+
+function buildAlternatives(ranked, excludeId) {
+  return ranked
+    .filter((r) => r.id && r.id !== excludeId)
+    .slice(0, 4)
+    .map((r) => {
+      const fish = getFishById(r.id);
       return {
-        ok: true,
-        engine: "vision+local",
-        confidence: conf,
-        features,
-        match: hit,
-        alternatives: ranked
-          .filter((r) => r.fish.id !== hit.id)
-          .slice(0, 3)
-          .map((r) => ({
-            id: r.fish.id,
-            name: r.fish.name,
-            confidence: clamp(Math.round(r.score * 0.9), 10, 90),
-          })),
-        notes: vision.notes || "Bulut görüntü modeli ile doğrulandı.",
+        id: r.id,
+        name: fish?.name || r.id,
+        confidence: clamp(Math.round(r.score * 100), 1, 99),
+      };
+    });
+}
+
+export async function identifyFishFromBuffer(buffer, mime = "image/jpeg") {
+  const started = Date.now();
+  const base64 = buffer.toString("base64");
+  let tmpFile = null;
+
+  try {
+    // Görüntü geçerli mi?
+    try {
+      decodeImage(buffer, mime);
+    } catch (err) {
+      return {
+        ok: false,
+        error: "Görüntü okunamadı. JPG veya PNG deneyin.",
+        detail: String(err.message || err),
+      };
+    }
+
+    // 1) OpenAI (opsiyonel)
+    try {
+      const vision = await identifyWithOpenAI(base64, mime);
+      if (vision && vision.isFish === false) {
+        return {
+          ok: true,
+          engine: "vision",
+          confidence: clamp(Number(vision.confidence) || 70, 40, 99),
+          isFish: false,
+          needsConfirm: false,
+          match: null,
+          alternatives: [],
+          notes: vision.notes || "Görselde balık bulunamadı.",
+          ms: Date.now() - started,
+        };
+      }
+      if (vision?.id && getFishById(vision.id)) {
+        const fish = getFishById(vision.id);
+        const conf = clamp(Number(vision.confidence) || 80, 50, 99);
+        return {
+          ok: true,
+          engine: "vision",
+          confidence: conf,
+          isFish: true,
+          needsConfirm: conf < 75,
+          match: fish,
+          alternatives: fishList
+            .filter((f) => f.id !== fish.id)
+            .slice(0, 3)
+            .map((f) => ({ id: f.id, name: f.name, confidence: 20 })),
+          notes: vision.notes || "Bulut görüntü modeli ile tanındı.",
+          ms: Date.now() - started,
+        };
+      }
+    } catch {
+      // devam
+    }
+
+    // 2) CLIP zero-shot (asıl motor)
+    tmpFile = writeTempImage(buffer, mime);
+    const ranked = await identifyWithClip(tmpFile);
+    const top = ranked[0];
+    const second = ranked[1];
+
+    if (!top || top.notFish || !top.id) {
+      const bestFish = ranked.find((r) => r.id && !r.notFish);
+      if (!bestFish || bestFish.score < 0.12) {
+        return {
+          ok: true,
+          engine: "clip",
+          confidence: clamp(Math.round((top?.score || 0) * 100), 5, 70),
+          isFish: false,
+          needsConfirm: true,
+          match: null,
+          alternatives: buildAlternatives(ranked, null),
+          notes:
+            "Balık net görünmüyor. Balığı yakından, iyi ışıkta, mümkünse düz zeminde tekrar çekin veya listeden seçin.",
+          ms: Date.now() - started,
+        };
+      }
+    }
+
+    const best = ranked.find((r) => r.id && !r.notFish) || top;
+    const fish = getFishById(best.id);
+    if (!fish) {
+      return {
+        ok: false,
+        error: "Eşleşme bulunamadı.",
         ms: Date.now() - started,
       };
     }
+
+    const gap = best.score - (second && !second.notFish ? second.score : 0);
+    let confidence = Math.round(best.score * 100);
+    if (gap > 0.08) confidence += 6;
+    if (gap < 0.03) confidence -= 8;
+    confidence = clamp(confidence, 20, 96);
+
+    const needsConfirm = confidence < 72 || gap < 0.045;
+
+    return {
+      ok: true,
+      engine: "clip",
+      confidence,
+      isFish: true,
+      needsConfirm,
+      match: fish,
+      alternatives: buildAlternatives(ranked, fish.id),
+      notes: needsConfirm
+        ? "Birden fazla tür mümkün. Doğru olanı seçin."
+        : `En olası eşleşme: ${fish.name}`,
+      ms: Date.now() - started,
+    };
+  } catch (err) {
+    console.error("identify error", err);
+    return {
+      ok: false,
+      error:
+        "AI modeli yüklenemedi veya analiz başarısız. Sunucuyu yeniden başlatıp tekrar deneyin.",
+      detail: String(err.message || err),
+      ms: Date.now() - started,
+    };
+  } finally {
+    if (tmpFile) {
+      try {
+        fs.unlinkSync(tmpFile);
+      } catch {
+        /* ignore */
+      }
+    }
   }
+}
 
-  const best = ranked[0];
-  const second = ranked[1];
-  const gap = best.score - (second?.score || 0);
-  const confidence = clamp(
-    Math.round(best.score * 0.85 + gap * 0.4 + 8),
-    42,
-    93
-  );
-
-  return {
-    ok: true,
-    engine: process.env.OPENAI_API_KEY ? "local-fallback" : "local-ai",
-    confidence,
-    features,
-    match: best.fish,
-    alternatives: ranked.slice(1, 4).map((r) => ({
-      id: r.fish.id,
-      name: r.fish.name,
-      confidence: clamp(Math.round(r.score * 0.85), 10, 88),
-    })),
-    notes:
-      best.reasons.slice(0, 3).join(" · ") ||
-      "Renk ve şekil özelliklerine göre tahmin edildi.",
-    ms: Date.now() - started,
-  };
+/** İlk istekte modeli ısıt */
+export async function warmupClip() {
+  try {
+    await getClip();
+    return true;
+  } catch (err) {
+    console.error("CLIP warmup failed", err);
+    return false;
+  }
 }

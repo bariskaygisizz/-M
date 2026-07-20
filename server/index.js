@@ -10,7 +10,7 @@ import {
   publicFish,
   REGIONS,
 } from "../data/fish.js";
-import { identifyFishFromBuffer } from "./identify.js";
+import { identifyFishFromBuffer, warmupClip } from "./identify.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const webDist = path.join(__dirname, "../web/dist");
@@ -103,4 +103,7 @@ app.get("*", (req, res, next) => {
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`BalıkAtlas http://0.0.0.0:${PORT}`);
+  warmupClip().then((ok) => {
+    console.log(ok ? "CLIP modeli hazır" : "CLIP warmup başarısız — ilk taramada inecek");
+  });
 });

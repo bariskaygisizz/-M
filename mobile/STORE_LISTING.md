@@ -88,3 +88,46 @@ Reviewer’a yazılacak kısa not:
 - 2.1 App Completeness: boş/placeholder ekran yok
 - 4.0 Design: çalışan arama, detay, favori, hakkında
 - Minimum functionality: bilgi uygulaması olarak yeterli içerik ve etkileşim (arama, filtre, favori, paylaşım)
+
+## App Store’dan nasıl para kazanılır?
+
+Apple, uygulamadan gelen ödemelerin bir kısmını alır (genelde **%15–30**). Sen kalanını alırsın.
+
+### 1) Ücretli uygulama (en basit)
+- App Store’da fiyat koy (örn. ₺99 / $2.99)
+- Kullanıcı bir kez öder, indirir
+- Apple kesintisi sonrası kalan sana yatar (App Store Connect → Payments)
+
+### 2) Freemium + abonelik (en çok kazandıran model)
+- Uygulama **ücretsiz** indirilsin
+- Ücretsiz: günde 3 AI tarama + atlas
+- Premium (abonelik): sınırsız tarama, reklamsız, gelişmiş AI
+  - Aylık örn. ₺79.99 / Yıllık ₺499.99
+- StoreKit / `expo-in-app-purchases` veya RevenueCat ile kurulur
+
+### 3) Reklam (AdMob)
+- Ücretsiz kullanıcıya banner / ödüllü reklam
+- Tarama başına veya sonuç ekranında reklam
+- Abonelik alanlarda reklam kapat
+
+### 4) Önerilen paket (BalıkAtlas için)
+1. Ücretsiz indir + sınırlı tarama
+2. **Premium aylık/yıllık** (sınırsız AI + reklamsız)
+3. İsteğe bağlı tek seferlik “Pro” satın alma
+
+### Para hesabına geçiş
+1. Apple Developer Program (yıllık ~$99)
+2. App Store Connect’te vergi / banka bilgisi (Agreements, Tax, and Banking)
+3. Paid Applications sözleşmesini imzala
+4. Uygulamayı yayınla → satışlar otomatik raporlanır
+5. Ödemeler genelde aylık, banka hesabına
+
+### Türkiye için not
+- App Store Türkiye fiyatlandırması TL olabilir
+- Gelir Apple’dan USD/yerel para ile gelir; vergi beyanı senin sorumluluğunda (muhasebecine danış)
+- Kamerlı AI uygulamalarında gizlilik metni + tıbbi uyarı şart (zaten var)
+
+### Teknik sonraki adım (istersen ekleriz)
+- RevenueCat veya StoreKit 2 ile `premium` satın alma
+- `scanLimit` (ücretsiz 3/gün) + Premium kilidi
+- AdMob opsiyonel
