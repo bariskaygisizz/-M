@@ -1,6 +1,8 @@
 import express from "express";
 import cors from "cors";
 import multer from "multer";
+import path from "path";
+import { fileURLToPath } from "url";
 import {
   fishList,
   getFishById,
@@ -9,6 +11,9 @@ import {
   REGIONS,
 } from "../data/fish.js";
 import { identifyFishFromBuffer } from "./identify.js";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const webDist = path.join(__dirname, "../web/dist");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -88,6 +93,14 @@ app.post("/api/identify", upload.single("image"), async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`BalıkAtlas API http://localhost:${PORT}`);
+app.use(express.static(webDist));
+app.get("*", (req, res, next) => {
+  if (req.path.startsWith("/api")) return next();
+  res.sendFile(path.join(webDist, "index.html"), (err) => {
+    if (err) next();
+  });
+});
+
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`BalıkAtlas http://0.0.0.0:${PORT}`);
 });
