@@ -1,33 +1,47 @@
 {
   "expo": {
-    "name": "İstanbul Kart Harita",
-    "slug": "istanbul-kart-harita",
+    "name": "BalıkAtlas",
+    "slug": "balikatlas",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "scheme": "istanbulkart",
+    "scheme": "balikatlas",
+    "primaryColor": "#084A5C",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#e30a17"
+      "backgroundColor": "#084A5C"
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.istanbulkart.harita",
+      "bundleIdentifier": "com.bariskaygisiz.balikatlas",
+      "buildNumber": "1",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Yakınınızdaki Biletmatik ve dolum noktalarını göstermek için konumunuza ihtiyaç duyuyoruz."
+        "CFBundleDisplayName": "BalıkAtlas",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "privacyManifests": {
+        "NSPrivacyTracking": false,
+        "NSPrivacyTrackingDomains": [],
+        "NSPrivacyCollectedDataTypes": [],
+        "NSPrivacyAccessedAPITypes": []
       }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#e30a17"
+        "backgroundColor": "#084A5C"
       },
-      "package": "com.istanbulkart.harita",
-      "permissions": ["ACCESS_COARSE_LOCATION", "ACCESS_FINE_LOCATION"]
+      "package": "com.bariskaygisiz.balikatlas",
+      "versionCode": 1,
+      "permissions": []
     },
-    "plugins": ["expo-router"],
+    "plugins": [
+      "expo-router",
+      "expo-asset",
+      "expo-font"
+    ],
     "experiments": {
       "typedRoutes": true
     }

@@ -1,28 +1,73 @@
-import { Tabs } from 'expo-router';
+import { Tabs } from "expo-router";
+import { Text, View } from "react-native";
+import { colors } from "../../constants/theme";
 
-export default function TabLayout() {
+function TabIcon({ letter, focused }) {
+  return (
+    <View
+      style={{
+        width: 28,
+        height: 28,
+        borderRadius: 8,
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: focused ? colors.foam : "transparent",
+      }}
+    >
+      <Text
+        style={{
+          fontSize: 13,
+          fontWeight: "800",
+          color: focused ? colors.brand : colors.muted,
+        }}
+      >
+        {letter}
+      </Text>
+    </View>
+  );
+}
+
+export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#e30a17',
-        tabBarInactiveTintColor: '#6b7280',
-        headerStyle: { backgroundColor: '#e30a17' },
-        headerTintColor: '#fff',
-        headerTitleStyle: { fontWeight: '700' }
+        headerStyle: { backgroundColor: colors.brand },
+        headerTintColor: "#fff",
+        headerTitleStyle: { fontWeight: "700" },
+        tabBarActiveTintColor: colors.brand,
+        tabBarInactiveTintColor: colors.muted,
+        tabBarStyle: {
+          backgroundColor: colors.surface,
+          borderTopColor: colors.line,
+        },
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Harita',
-          tabBarLabel: 'Harita'
+          title: "Keşfet",
+          tabBarIcon: ({ focused }) => <TabIcon letter="K" focused={focused} />,
         }}
       />
       <Tabs.Screen
-        name="list"
+        name="browse"
         options={{
-          title: 'Liste',
-          tabBarLabel: 'Liste'
+          title: "Balıklar",
+          tabBarIcon: ({ focused }) => <TabIcon letter="B" focused={focused} />,
+        }}
+      />
+      <Tabs.Screen
+        name="favorites"
+        options={{
+          title: "Favoriler",
+          tabBarIcon: ({ focused }) => <TabIcon letter="F" focused={focused} />,
+        }}
+      />
+      <Tabs.Screen
+        name="about"
+        options={{
+          title: "Hakkında",
+          tabBarIcon: ({ focused }) => <TabIcon letter="i" focused={focused} />,
         }}
       />
     </Tabs>
