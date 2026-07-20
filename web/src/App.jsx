@@ -1,7 +1,23 @@
 import { useEffect, useState } from "react";
-import { fetchFish, health } from "./api";
+import {
+  fetchFish,
+  fetchMe,
+  fetchMeta,
+  health,
+  login,
+  register,
+  activatePlan,
+  clearSession,
+  getCachedUser,
+} from "./api";
 import ScanView from "./components/ScanView.jsx";
-import { FishCard, FishDetail } from "./components/FishUI.jsx";
+import {
+  FishCard,
+  FishDetail,
+  AuthPanel,
+  Paywall,
+  OceanSim,
+} from "./components/FishUI.jsx";
 
 const REGIONS = ["Tümü", "Karadeniz", "Marmara", "Ege", "Akdeniz", "Tatlı Su"];
 
@@ -12,11 +28,20 @@ export default function App() {
   const [region, setRegion] = useState("Tümü");
   const [selected, setSelected] = useState(null);
   const [status, setStatus] = useState(null);
+  const [user, setUser] = useState(getCachedUser());
+  const [authMode, setAuthMode] = useState("login");
+  const [authError, setAuthError] = useState("");
+  const [authBusy, setAuthBusy] = useState(false);
+  const [plans, setPlans] = useState([]);
+  const [paywall, setPaywall] = useState(false);
+  const [buyBusy, setBuyBusy] = useState(false);
 
   useEffect(() => {
-    health()
-      .then(setStatus)
-      .catch(() => setStatus({ ok: false }));
+    health().then(setStatus).catch(() => setStatus({ ok: false }));
+    fetchMeta()
+      .then((m) => setPlans(m.plans || []))
+      .catch(() => {});
+    fetchMe().then((u) => setUser(u));
   }, []);
 
   useEffect(() => {
@@ -37,6 +62,34 @@ export default function App() {
     setTab("detail");
   };
 
+  const onAuth = async (username, password) => {
+    setAuthBusy(true);
+    setAuthError("");
+    try {
+      const fn = authMode === "login" ? login : register;
+      const json = await fn(username, password);
+      setUser(json.user);
+      setTab("home");
+    } catch (err) {
+      setAuthError(err.message || "Hata");
+    } finally {
+      setAuthBusy(false);
+    }
+  };
+
+  const onBuy = async (planId) => {
+    setBuyBusy(true);
+    try {
+      const json = await activatePlan(planId);
+      setUser(json.user);
+      setPaywall(false);
+    } catch (err) {
+      alert(err.message || "Satın alma başarısız");
+    } finally {
+      setBuyBusy(false);
+    }
+  };
+
   return (
     <div className="app-shell">
       <header className="topbar">
@@ -54,7 +107,7 @@ export default function App() {
           <button
             type="button"
             className={tab === "scan" ? "active" : ""}
-            onClick={() => setTab("scan")}
+            onClick={() => setTab(user ? "scan" : "auth")}
           >
             AI Tara
           </button>
@@ -68,6 +121,20 @@ export default function App() {
           >
             Atlas
           </button>
+          <button
+            type="button"
+            className={tab === "premium" ? "active" : ""}
+            onClick={() => (user ? setPaywall(true) : setTab("auth"))}
+          >
+            Premium
+          </button>
+          <button
+            type="button"
+            className={tab === "auth" || tab === "account" ? "active" : ""}
+            onClick={() => setTab(user ? "account" : "auth")}
+          >
+            {user ? user.username : "Giriş"}
+          </button>
         </nav>
       </header>
 
@@ -75,19 +142,20 @@ export default function App() {
         {tab === "home" && (
           <>
             <section className="hero">
-              <div className="hero-kicker">AI · Kamera · Canlı Rehber</div>
+              <OceanSim />
+              <div className="hero-kicker">AI · Hesap · Freemium</div>
               <h1>BALIKATLAS</h1>
               <p>
-                Kamerayla tara, balığı tanı. Tür, ağırlık, bölge, kalori, fayda
-                ve zararları tek ekranda — istanbulasim tarzı modern arayüz.
+                Kamerayla tara, balığı tanı. Hesabınla ücretsiz veya Premium;
+                kim abone net. Canlı okyanus simülasyonuyla modern rehber.
               </p>
               <div className="cta-row">
                 <button
                   type="button"
                   className="btn btn-primary"
-                  onClick={() => setTab("scan")}
+                  onClick={() => setTab(user ? "scan" : "auth")}
                 >
-                  Kamerayı Aç
+                  {user ? "Kamerayı Aç" : "Giriş / Kayıt"}
                 </button>
                 <button
                   type="button"
@@ -96,7 +164,16 @@ export default function App() {
                 >
                   Balık Atlası
                 </button>
+                <button type="button" className="btn" onClick={() => setPaywall(true)}>
+                  Abonelikler
+                </button>
               </div>
+              {user && (
+                <div className="hud-chip">
+                  @{user.username} · {user.plan}
+                  {user.plan === "free" ? ` · kalan ${user.scansLeft}/${user.scanLimit}` : " · sınırsız"}
+                </div>
+              )}
             </section>
 
             <section style={{ marginTop: "1.25rem" }}>
@@ -110,7 +187,14 @@ export default function App() {
           </>
         )}
 
-        {tab === "scan" && <ScanView onOpenFish={openFish} />}
+        {tab === "scan" && user && (
+          <ScanView
+            onOpenFish={openFish}
+            user={user}
+            setUser={setUser}
+            onPaywall={() => setPaywall(true)}
+          />
+        )}
 
         {tab === "atlas" && (
           <>
@@ -147,13 +231,69 @@ export default function App() {
         {tab === "detail" && selected && (
           <FishDetail fish={selected} onBack={() => setTab("atlas")} />
         )}
+
+        {tab === "auth" && !user && (
+          <AuthPanel
+            mode={authMode}
+            busy={authBusy}
+            error={authError}
+            onSubmit={onAuth}
+            onSwitch={() =>
+              setAuthMode((m) => (m === "login" ? "register" : "login"))
+            }
+          />
+        )}
+
+        {tab === "account" && user && (
+          <div className="panel">
+            <h2 className="section-title">Hesabım</h2>
+            <p>
+              Kullanıcı: <strong>@{user.username}</strong>
+            </p>
+            <p>
+              Plan: <span className="meta">{user.plan}</span>
+            </p>
+            {user.premiumUntil && (
+              <p className="muted">Premium bitiş: {new Date(user.premiumUntil).toLocaleString("tr-TR")}</p>
+            )}
+            {user.plan === "free" && (
+              <p className="muted">
+                Bugün kalan AI tarama: {user.scansLeft}/{user.scanLimit}
+              </p>
+            )}
+            <div className="cta-row" style={{ marginTop: 16 }}>
+              <button type="button" className="btn btn-primary" onClick={() => setPaywall(true)}>
+                Premium Abonelikler
+              </button>
+              <button
+                type="button"
+                className="btn"
+                onClick={() => {
+                  clearSession();
+                  setUser(null);
+                  setTab("auth");
+                }}
+              >
+                Çıkış Yap
+              </button>
+            </div>
+          </div>
+        )}
       </main>
+
+      {paywall && user && (
+        <Paywall
+          plans={plans}
+          user={user}
+          busy={buyBusy}
+          onBuy={onBuy}
+          onClose={() => setPaywall(false)}
+        />
+      )}
 
       <footer className="footer">
         API {status?.ok ? "online" : "offline"}
-        {status?.fishCount != null ? ` · ${status.fishCount} balık` : ""}
-        {status?.vision ? " · vision aktif" : " · yerel AI"} · Bilgilendirme
-        amaçlıdır
+        {user ? ` · @${user.username} (${user.plan})` : " · misafir"} · Freemium
       </footer>
     </div>
   );

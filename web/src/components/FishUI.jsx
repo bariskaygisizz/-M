@@ -1,6 +1,10 @@
 export function FishCard({ fish, onOpen }) {
   return (
     <button type="button" className="fish-card" onClick={() => onOpen(fish)}>
+      <div className="fish-thumb-wrap">
+        <img className="fish-thumb" src={fish.image || `/fish/${fish.id}.svg`} alt="" />
+        <div className="fish-swim" />
+      </div>
       <div className="tag">{fish.type}</div>
       <h3>{fish.name}</h3>
       <div className="sci">{fish.scientific}</div>
@@ -46,6 +50,11 @@ export function FishDetail({ fish, onBack }) {
         ← Geri
       </button>
       <div className="detail-hero" style={{ marginTop: "1rem" }}>
+        <img
+          src={fish.image || `/fish/${fish.id}.svg`}
+          alt={fish.name}
+          className="detail-img"
+        />
         <div className="tag" style={{ fontFamily: "var(--mono)", color: "var(--accent)" }}>
           {fish.type} · {fish.season}
         </div>
@@ -122,6 +131,108 @@ export function FishDetail({ fish, onBack }) {
           Bilgilendirme amaçlıdır; tıbbi teşhis veya diyet tedavisi değildir.
         </p>
       </div>
+    </div>
+  );
+}
+
+export function AuthPanel({ mode, onSubmit, onSwitch, error, busy }) {
+  return (
+    <form
+      className="panel auth-panel"
+      onSubmit={(e) => {
+        e.preventDefault();
+        const fd = new FormData(e.currentTarget);
+        onSubmit(String(fd.get("username") || ""), String(fd.get("password") || ""));
+      }}
+    >
+      <h2 className="section-title">{mode === "login" ? "Giriş Yap" : "Hesap Oluştur"}</h2>
+      <p className="muted">
+        Abonelik ve tarama hakların hesabına bağlanır. Kim ödedi / kim ücretsiz net görülür.
+      </p>
+      <label className="field">
+        <span>Kullanıcı adı</span>
+        <input name="username" autoComplete="username" required minLength={3} />
+      </label>
+      <label className="field">
+        <span>Şifre</span>
+        <input
+          name="password"
+          type="password"
+          autoComplete={mode === "login" ? "current-password" : "new-password"}
+          required
+          minLength={6}
+        />
+      </label>
+      {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
+      <button className="btn btn-primary" type="submit" disabled={busy}>
+        {busy ? "Bekle…" : mode === "login" ? "Giriş" : "Kayıt Ol"}
+      </button>
+      <button type="button" className="btn" onClick={onSwitch}>
+        {mode === "login" ? "Hesabın yok mu? Kayıt ol" : "Hesabın var mı? Giriş yap"}
+      </button>
+    </form>
+  );
+}
+
+export function Paywall({ plans, user, onBuy, onClose, busy }) {
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal panel" onClick={(e) => e.stopPropagation()}>
+        <h2 className="section-title">Premium Abonelik</h2>
+        <p className="muted">
+          Merhaba <strong>{user?.username}</strong> — planın:{" "}
+          <span className="meta">{user?.plan}</span>
+          {user?.plan === "free" && user?.scansLeft != null
+            ? ` · kalan tarama: ${user.scansLeft}`
+            : ""}
+        </p>
+        <div className="plan-grid">
+          {(plans || [])
+            .filter((p) => p.id !== "free")
+            .map((p) => (
+              <div className="plan-card" key={p.id}>
+                <div className="tag">{p.price}</div>
+                <h3>{p.name}</h3>
+                <ul className="listy good">
+                  {(p.features || []).map((f) => (
+                    <li key={f}>{f}</li>
+                  ))}
+                </ul>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  disabled={busy || user?.plan === "premium"}
+                  onClick={() => onBuy(p.id)}
+                >
+                  {user?.plan === "premium" ? "Aktif" : "Abone Ol"}
+                </button>
+              </div>
+            ))}
+        </div>
+        <p className="disclaimer">
+          App Store’da gerçek ödeme StoreKit / RevenueCat ile alınır. Bu sürümde
+          test aboneliği hesabına işlenir; kim ödedi sunucuda kullanıcı adına bağlıdır.
+        </p>
+        <button type="button" className="btn" onClick={onClose}>
+          Kapat
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export function OceanSim() {
+  return (
+    <div className="ocean-sim" aria-hidden="true">
+      <div className="wave w1" />
+      <div className="wave w2" />
+      <div className="wave w3" />
+      <div className="bubble b1" />
+      <div className="bubble b2" />
+      <div className="bubble b3" />
+      <div className="swim-fish f1" />
+      <div className="swim-fish f2" />
+      <div className="swim-fish f3" />
     </div>
   );
 }

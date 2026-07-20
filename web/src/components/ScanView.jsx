@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { identifyImage, fetchFish } from "../api";
 import { StatGrid } from "./FishUI";
 
-export default function ScanView({ onOpenFish }) {
+export default function ScanView({ onOpenFish, user, setUser, onPaywall }) {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
@@ -87,11 +87,18 @@ export default function ScanView({ onOpenFish }) {
     try {
       const json = await identifyImage(blob);
       setResult(json);
+      if (json.user) setUser?.(json.user);
       if (json.match && !json.needsConfirm && json.isFish !== false) {
         setSelected(json.match);
       }
     } catch (err) {
-      setError(err.message || "Tanıma başarısız");
+      if (err.paywall || err.code === "LIMIT") {
+        if (err.user) setUser?.(err.user);
+        setError(err.message || "Tarama hakkın bitti");
+        onPaywall?.();
+      } else {
+        setError(err.message || "Tanıma başarısız");
+      }
     } finally {
       setBusy(false);
     }
@@ -148,6 +155,9 @@ export default function ScanView({ onOpenFish }) {
         <canvas ref={canvasRef} style={{ display: "none" }} />
         <p className="meta" style={{ marginTop: 8 }}>
           İpucu: Balığı çerçeveye doldur, ışık bol olsun, tek balık çek.
+          {user?.plan === "free"
+            ? ` · Kalan hak: ${user.scansLeft}/${user.scanLimit}`
+            : " · Premium sınırsız"}
         </p>
         <div className="scan-actions">
           <button

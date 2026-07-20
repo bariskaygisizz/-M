@@ -80,6 +80,13 @@ export default function TabsLayout() {
           tabBarIcon: ({ focused }) => <TabIcon letter="i" focused={focused} />,
         }}
       />
+      <Tabs.Screen
+        name="account"
+        options={{
+          title: "Hesap",
+          tabBarIcon: ({ focused }) => <TabIcon letter="@" focused={focused} />,
+        }}
+      />
     </Tabs>
   );
 }

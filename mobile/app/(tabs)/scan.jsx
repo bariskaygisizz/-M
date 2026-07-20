@@ -11,7 +11,7 @@ import {
 import { CameraView, useCameraPermissions } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { identifyImage, fetchFish } from "../../lib/api";
+import { identifyImage, fetchFish, getCachedUser } from "../../lib/api";
 import { useRouter } from "expo-router";
 
 export default function ScanScreen() {
@@ -23,9 +23,11 @@ export default function ScanScreen() {
   const [selected, setSelected] = useState(null);
   const [catalog, setCatalog] = useState([]);
   const [error, setError] = useState("");
+  const [user, setUser] = useState(null);
   const router = useRouter();
 
   useEffect(() => {
+    getCachedUser().then(setUser);
     fetchFish()
       .then((d) => setCatalog(d.items || []))
       .catch(() => {});
@@ -37,6 +39,11 @@ export default function ScanScreen() {
   };
 
   const run = async (uri) => {
+    if (!user) {
+      setError("AI tarama için giriş yap (Hesap sekmesi).");
+      router.push("/(tabs)/account");
+      return;
+    }
     setBusy(true);
     setError("");
     setResult(null);
@@ -45,11 +52,18 @@ export default function ScanScreen() {
     try {
       const json = await identifyImage(uri);
       setResult(json);
+      if (json.user) setUser(json.user);
       if (json.match && !json.needsConfirm && json.isFish !== false) {
         setSelected(json.match);
       }
     } catch (err) {
-      setError(err.message || "Tanıma başarısız");
+      if (err.user) setUser(err.user);
+      if (err.paywall || err.code === "LIMIT") {
+        setError(err.message || "Tarama hakkın bitti");
+        router.push("/(tabs)/account");
+      } else {
+        setError(err.message || "Tanıma başarısız");
+      }
     } finally {
       setBusy(false);
     }
