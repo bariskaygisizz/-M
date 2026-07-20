@@ -1,14 +1,17 @@
 {
-  "name": "istanbul-kart-server",
+  "name": "balikatlas-server",
   "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
     "start": "node index.js",
-    "sync": "node scripts/sync-data.js"
+    "dev": "node --watch index.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
-    "express": "^4.21.2"
+    "express": "^4.21.2",
+    "jpeg-js": "^0.4.4",
+    "multer": "^1.4.5-lts.1",
+    "pngjs": "^7.0.0"
   }
 }

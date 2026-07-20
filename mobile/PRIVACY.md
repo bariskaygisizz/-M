@@ -6,7 +6,7 @@ BalıkAtlas (“Uygulama”), Barış Kaygısız tarafından yayınlanır. Bu po
 
 ## 1. Toplanan veriler
 
-Uygulama hesap oluşturmaz; konum, kamera, mikrofon, rehber veya fotoğraf erişimi istemez. Reklam veya analitik SDK’sı kullanılmaz. Apple App Tracking Transparency kapsamında takip yapılmaz.
+Uygulama hesap oluşturmaz. Kamera ve galeri erişimi yalnızca balık tarama/AI tanıma için, sen açıkça izin verdiğinde kullanılır. Fotoğraflar tanıma isteği için sunucuya gönderilebilir; kalıcı kullanıcı hesabı oluşturulmaz. Reklam veya analitik SDK’sı kullanılmaz.
 
 ## 2. Cihazda saklanan veriler
 

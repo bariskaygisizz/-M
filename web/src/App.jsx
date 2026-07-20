@@ -1,203 +1,160 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import MapView from './components/MapView';
+import { useEffect, useState } from "react";
+import { fetchFish, health } from "./api";
+import ScanView from "./components/ScanView.jsx";
+import { FishCard, FishDetail } from "./components/FishUI.jsx";
 
-const API_BASE = import.meta.env.VITE_API_URL || '/api';
-
-const TYPE_COLORS = {
-  Biletmatik: '#2563eb',
-  'Biletmatik 4': '#7c3aed',
-  'Bayi / Dolum Noktası': '#16a34a',
-  'Dolum Merkezi': '#ea580c',
-  Diğer: '#6b7280'
-};
-
-function badgeClass(type) {
-  if (type === 'Biletmatik') return 'badge badge-biletmatik';
-  if (type === 'Biletmatik 4') return 'badge badge-biletmatik4';
-  if (type === 'Dolum Merkezi') return 'badge badge-dolum';
-  return 'badge badge-bayi';
-}
+const REGIONS = ["Tümü", "Karadeniz", "Marmara", "Ege", "Akdeniz", "Tatlı Su"];
 
 export default function App() {
-  const [meta, setMeta] = useState(null);
-  const [locations, setLocations] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [query, setQuery] = useState('');
-  const [district, setDistrict] = useState('');
-  const [selectedTypes, setSelectedTypes] = useState(['Biletmatik', 'Biletmatik 4']);
-  const [selectedId, setSelectedId] = useState(null);
-  const [userLocation, setUserLocation] = useState(null);
-  const [nearbyOnly, setNearbyOnly] = useState(false);
-
-  const fetchLocations = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const params = new URLSearchParams();
-      if (selectedTypes.length) params.set('type', selectedTypes.join(','));
-      if (district) params.set('district', district);
-      if (query) params.set('q', query);
-      if (nearbyOnly && userLocation) {
-        params.set('lat', String(userLocation.lat));
-        params.set('lng', String(userLocation.lng));
-        params.set('radiusKm', '3');
-        params.set('limit', '300');
-      } else {
-        params.set('limit', '500');
-      }
-
-      const [metaRes, locRes] = await Promise.all([
-        fetch(`${API_BASE}/meta`),
-        fetch(`${API_BASE}/locations?${params}`)
-      ]);
-
-      if (!metaRes.ok || !locRes.ok) {
-        throw new Error('API bağlantısı kurulamadı. Sunucunun çalıştığından emin olun.');
-      }
-
-      const metaJson = await metaRes.json();
-      const locJson = await locRes.json();
-      setMeta(metaJson);
-      setLocations(locJson.locations);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedTypes, district, query, nearbyOnly, userLocation]);
+  const [tab, setTab] = useState("home");
+  const [items, setItems] = useState([]);
+  const [q, setQ] = useState("");
+  const [region, setRegion] = useState("Tümü");
+  const [selected, setSelected] = useState(null);
+  const [status, setStatus] = useState(null);
 
   useEffect(() => {
-    fetchLocations();
-  }, [fetchLocations]);
+    health()
+      .then(setStatus)
+      .catch(() => setStatus({ ok: false }));
+  }, []);
 
-  const toggleType = (type) => {
-    setSelectedTypes((prev) =>
-      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
-    );
+  useEffect(() => {
+    if (tab !== "atlas" && tab !== "home") return;
+    let alive = true;
+    fetchFish({ q, region })
+      .then((data) => {
+        if (alive) setItems(data.items || []);
+      })
+      .catch(() => alive && setItems([]));
+    return () => {
+      alive = false;
+    };
+  }, [tab, q, region]);
+
+  const openFish = (fish) => {
+    setSelected(fish);
+    setTab("detail");
   };
-
-  const handleLocateMe = () => {
-    if (!navigator.geolocation) {
-      setError('Tarayıcınız konum servisini desteklemiyor.');
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        setNearbyOnly(true);
-      },
-      () => setError('Konum izni verilmedi.')
-    );
-  };
-
-  const selectedLocation = useMemo(
-    () => locations.find((loc) => loc.id === selectedId) || null,
-    [locations, selectedId]
-  );
-
-  if (error && !meta) {
-    return <div className="error">{error}</div>;
-  }
 
   return (
-    <div className="app">
-      <aside className="sidebar">
-        <div className="sidebar-header">
-          <h1>İstanbul Kart Harita</h1>
-          <p>Biletmatik ve dolum noktalarını haritada keşfedin</p>
+    <div className="app-shell">
+      <header className="topbar">
+        <div className="brand">
+          BALIK<span>ATLAS</span>
         </div>
+        <nav className="nav">
+          <button
+            type="button"
+            className={tab === "home" ? "active" : ""}
+            onClick={() => setTab("home")}
+          >
+            Ana
+          </button>
+          <button
+            type="button"
+            className={tab === "scan" ? "active" : ""}
+            onClick={() => setTab("scan")}
+          >
+            AI Tara
+          </button>
+          <button
+            type="button"
+            className={tab === "atlas" || tab === "detail" ? "active" : ""}
+            onClick={() => {
+              setSelected(null);
+              setTab("atlas");
+            }}
+          >
+            Atlas
+          </button>
+        </nav>
+      </header>
 
-        <div className="controls">
-          <div>
-            <label htmlFor="search">Ara</label>
-            <input
-              id="search"
-              placeholder="İlçe, adres veya terminal no..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-          </div>
-
-          <div>
-            <label htmlFor="district">İlçe</label>
-            <select id="district" value={district} onChange={(e) => setDistrict(e.target.value)}>
-              <option value="">Tüm ilçeler</option>
-              {(meta?.districts || []).map((d) => (
-                <option key={d} value={d}>
-                  {d}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label>Nokta tipi</label>
-            <div className="type-filters">
-              {(meta?.types || ['Biletmatik', 'Biletmatik 4', 'Bayi / Dolum Noktası', 'Dolum Merkezi']).map(
-                (type) => (
-                  <button
-                    key={type}
-                    type="button"
-                    className={`type-chip ${selectedTypes.includes(type) ? 'active' : ''}`}
-                    onClick={() => toggleType(type)}
-                  >
-                    {type}
-                  </button>
-                )
-              )}
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button type="button" className="btn btn-primary" style={{ flex: 1 }} onClick={fetchLocations}>
-              Filtrele
-            </button>
-            <button type="button" className="btn btn-secondary" onClick={handleLocateMe}>
-              Yakınımdakiler
-            </button>
-          </div>
-        </div>
-
-        <div className="stats">
-          {loading ? 'Yükleniyor...' : `${locations.length} nokta listeleniyor`}
-          {meta?.updatedAt && (
-            <div>Güncelleme: {new Date(meta.updatedAt).toLocaleDateString('tr-TR')}</div>
-          )}
-        </div>
-
-        <div className="location-list">
-          {locations.map((loc) => (
-            <article
-              key={loc.id}
-              className={`location-card ${selectedId === loc.id ? 'selected' : ''}`}
-              onClick={() => setSelectedId(loc.id)}
-            >
-              <span className={badgeClass(loc.type)}>{loc.type}</span>
-              <h3>{loc.district}</h3>
-              <div className="meta">
-                {loc.address && <div>{loc.address}</div>}
-                {loc.terminalId && <div>Terminal: {loc.terminalId}</div>}
-                {loc.distanceKm != null && <div>{loc.distanceKm.toFixed(2)} km uzaklıkta</div>}
+      <main className="main">
+        {tab === "home" && (
+          <>
+            <section className="hero">
+              <div className="hero-kicker">AI · Kamera · Canlı Rehber</div>
+              <h1>BALIKATLAS</h1>
+              <p>
+                Kamerayla tara, balığı tanı. Tür, ağırlık, bölge, kalori, fayda
+                ve zararları tek ekranda — istanbulasim tarzı modern arayüz.
+              </p>
+              <div className="cta-row">
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => setTab("scan")}
+                >
+                  Kamerayı Aç
+                </button>
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={() => setTab("atlas")}
+                >
+                  Balık Atlası
+                </button>
               </div>
-            </article>
-          ))}
-        </div>
+            </section>
 
-        <div className="footer-note">
-          Veri kaynağı: İBB Açık Veri Portalı — BELBİM İstanbulkart Dolum Merkezi Bilgileri
-        </div>
-      </aside>
+            <section style={{ marginTop: "1.25rem" }}>
+              <h2 className="section-title">Öne çıkanlar</h2>
+              <div className="grid">
+                {items.slice(0, 4).map((f) => (
+                  <FishCard key={f.id} fish={f} onOpen={openFish} />
+                ))}
+              </div>
+            </section>
+          </>
+        )}
 
-      <main className="map-panel">
-        <MapView
-          locations={locations}
-          selectedLocation={selectedLocation}
-          userLocation={userLocation}
-          typeColors={TYPE_COLORS}
-          onSelect={setSelectedId}
-        />
+        {tab === "scan" && <ScanView onOpenFish={openFish} />}
+
+        {tab === "atlas" && (
+          <>
+            <div className="toolbar">
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Balık, bölge veya tür ara…"
+              />
+            </div>
+            <div className="chips" style={{ marginBottom: "1rem" }}>
+              {REGIONS.map((r) => (
+                <button
+                  key={r}
+                  type="button"
+                  className={`chip ${region === r ? "active" : ""}`}
+                  onClick={() => setRegion(r)}
+                >
+                  {r}
+                </button>
+              ))}
+            </div>
+            <p className="meta" style={{ marginBottom: "0.8rem" }}>
+              {items.length} kayıt
+            </p>
+            <div className="grid">
+              {items.map((f) => (
+                <FishCard key={f.id} fish={f} onOpen={openFish} />
+              ))}
+            </div>
+          </>
+        )}
+
+        {tab === "detail" && selected && (
+          <FishDetail fish={selected} onBack={() => setTab("atlas")} />
+        )}
       </main>
+
+      <footer className="footer">
+        API {status?.ok ? "online" : "offline"}
+        {status?.fishCount != null ? ` · ${status.fishCount} balık` : ""}
+        {status?.vision ? " · vision aktif" : " · yerel AI"} · Bilgilendirme
+        amaçlıdır
+      </footer>
     </div>
   );
 }

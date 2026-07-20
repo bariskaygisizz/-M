@@ -11,7 +11,7 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#084A5C"
+      "backgroundColor": "#0a0a0a"
     },
     "ios": {
       "supportsTablet": true,
@@ -19,7 +19,9 @@
       "buildNumber": "1",
       "infoPlist": {
         "CFBundleDisplayName": "BalıkAtlas",
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSCameraUsageDescription": "Balığı kamerayla tarayıp AI ile tanımak için kamera erişimi gerekir.",
+        "NSPhotoLibraryUsageDescription": "Galeriden balık fotoğrafı seçerek AI tanıma yapmak için gerekir."
       },
       "privacyManifests": {
         "NSPrivacyTracking": false,
@@ -31,16 +33,22 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#084A5C"
+        "backgroundColor": "#0a0a0a"
       },
       "package": "com.bariskaygisiz.balikatlas",
       "versionCode": 1,
-      "permissions": []
+      "permissions": ["CAMERA"]
     },
     "plugins": [
       "expo-router",
       "expo-asset",
-      "expo-font"
+      "expo-font",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Balığı kamerayla tarayıp AI ile tanımak için kamera erişimi gerekir."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

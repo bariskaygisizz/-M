@@ -1,6 +1,9 @@
 import { Tabs } from "expo-router";
 import { Text, View } from "react-native";
-import { colors } from "../../constants/theme";
+
+const brand = "#2edcc8";
+const muted = "#8a9aa0";
+const bg = "#0a0a0a";
 
 function TabIcon({ letter, focused }) {
   return (
@@ -11,14 +14,14 @@ function TabIcon({ letter, focused }) {
         borderRadius: 8,
         alignItems: "center",
         justifyContent: "center",
-        backgroundColor: focused ? colors.foam : "transparent",
+        backgroundColor: focused ? "rgba(46,220,200,0.15)" : "transparent",
       }}
     >
       <Text
         style={{
           fontSize: 13,
           fontWeight: "800",
-          color: focused ? colors.brand : colors.muted,
+          color: focused ? brand : muted,
         }}
       >
         {letter}
@@ -31,14 +34,14 @@ export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
-        headerStyle: { backgroundColor: colors.brand },
+        headerStyle: { backgroundColor: bg },
         headerTintColor: "#fff",
         headerTitleStyle: { fontWeight: "700" },
-        tabBarActiveTintColor: colors.brand,
-        tabBarInactiveTintColor: colors.muted,
+        tabBarActiveTintColor: brand,
+        tabBarInactiveTintColor: muted,
         tabBarStyle: {
-          backgroundColor: colors.surface,
-          borderTopColor: colors.line,
+          backgroundColor: "#111314",
+          borderTopColor: "rgba(255,255,255,0.08)",
         },
       }}
     >
@@ -50,9 +53,16 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="scan"
+        options={{
+          title: "AI Tara",
+          tabBarIcon: ({ focused }) => <TabIcon letter="AI" focused={focused} />,
+        }}
+      />
+      <Tabs.Screen
         name="browse"
         options={{
-          title: "Balıklar",
+          title: "Atlas",
           tabBarIcon: ({ focused }) => <TabIcon letter="B" focused={focused} />,
         }}
       />

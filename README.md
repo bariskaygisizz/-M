@@ -1,49 +1,38 @@
 # BalıkAtlas
 
-Türkiye denizleri ve tatlı sularındaki balıkları tanıtan **App Store uyumlu** mobil rehber.
+istanbulasim.com tarzı **modern koyu arayüz** + **backend API** + **kamera ile AI balık tanıma**.
 
-- Tür / bilimsel ad
-- Ortalama ağırlık ve boy
-- Yetiştiği bölgeler
-- Kalori, protein, yağ, omega-3 (100 g yaklaşık)
-- Olası faydalar ve dikkat noktaları
-- Arama, bölge filtresi, favoriler (cihaz içi)
+## Özellikler
 
-## Proje yapısı
+- Kamerayla / galeriden balık tara → AI tür tahmini
+- Tür, ağırlık, bölge, kalori, fayda ve zararlar
+- Web (Vite React) + Express API + Expo mobil
+- Yerel görüntü analizi (renk/şekil). `OPENAI_API_KEY` varsa vision modeli de kullanılır
 
-```
-mobile/          # Expo (React Native) — App Store hedefi
-  app/           # Ekranlar (expo-router)
-  data/fish.js   # Balık veri seti
-  STORE_LISTING.md
-  PRIVACY.md
-  eas.json
+## Çalıştırma
+
+```bash
+npm run install:all
+npm run server   # http://localhost:3001
+npm run web      # http://localhost:5173
 ```
 
-## Geliştirme
+Mobil:
 
 ```bash
 cd mobile
-npm install
-npm start
+EXPO_PUBLIC_API_URL=http://<bilgisayar-ip>:3001 npm start
 ```
 
-iOS simülatör veya Expo Go ile test edin.
+## API
 
-## App Store yayın
+| Endpoint | Açıklama |
+|----------|----------|
+| `GET /api/health` | Sağlık |
+| `GET /api/fish` | Liste (`q`, `region`) |
+| `GET /api/fish/:id` | Detay |
+| `POST /api/identify` | `multipart image` veya `imageBase64` |
 
-Ayrıntılı checklist, metinler ve EAS komutları: [`mobile/STORE_LISTING.md`](mobile/STORE_LISTING.md)
+## App Store
 
-Kısa özet:
-
-```bash
-cd mobile
-npx eas-cli login
-npx eas init
-npx eas build --platform ios --profile production
-npx eas submit --platform ios --profile production
-```
-
-## Önemli uyarı
-
-Uygulama bilgilendirme amaçlıdır; tıbbi teşhis veya tedavi değildir.
+`mobile/STORE_LISTING.md` — kamera izni metinleri `app.json` içinde.
