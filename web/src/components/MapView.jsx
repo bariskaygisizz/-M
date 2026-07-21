@@ -85,6 +85,7 @@ function MapController({ home, selected, followSelected, pickHomeMode, onPickHom
 export default function MapView({
   home,
   radiusKm,
+  wideRadiusKm = 0,
   flights,
   selectedId,
   onSelect,
@@ -127,6 +128,19 @@ export default function MapView({
               fillOpacity: 0.06
             }}
           />
+          {wideRadiusKm > radiusKm && (
+            <Circle
+              center={[home.lat, home.lng]}
+              radius={wideRadiusKm * 1000}
+              pathOptions={{
+                color: '#3ecf8e',
+                weight: 1,
+                dashArray: '2 10',
+                fillColor: '#3ecf8e',
+                fillOpacity: 0.03
+              }}
+            />
+          )}
           <Marker position={[home.lat, home.lng]} icon={createHomeIcon()}>
             <Popup>
               <strong>{home.name || 'Ev'}</strong>

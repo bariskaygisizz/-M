@@ -39,8 +39,9 @@ export class FlightSimulator {
   constructor(options = {}) {
     this.home = options.home || { lat: 41.0082, lng: 28.9784, altM: 40, name: 'Ev' };
     this.radiusKm = options.radiusKm || 80;
-    this.planeCount = options.planeCount ?? 18;
-    this.heliCount = options.heliCount ?? 4;
+    this.wideRadiusKm = options.wideRadiusKm || 900;
+    this.planeCount = options.planeCount ?? 36;
+    this.heliCount = options.heliCount ?? 5;
     this.aircraft = [];
     this.lastTick = Date.now();
     this.seedFleet();
@@ -51,22 +52,31 @@ export class FlightSimulator {
   }
 
   setRadius(km) {
-    this.radiusKm = Math.max(10, Math.min(300, Number(km) || 80));
+    this.radiusKm = Math.max(10, Math.min(400, Number(km) || 80));
+  }
+
+  setWideRadius(km) {
+    this.wideRadiusKm = Math.max(100, Math.min(1500, Number(km) || 900));
   }
 
   seedFleet() {
     this.aircraft = [];
-    for (let i = 0; i < this.planeCount; i++) {
-      this.aircraft.push(this.createPlane());
+    const nearPlanes = Math.ceil(this.planeCount * 0.4);
+    const farPlanes = this.planeCount - nearPlanes;
+    for (let i = 0; i < nearPlanes; i++) {
+      this.aircraft.push(this.createPlane({ preferNear: true }));
+    }
+    for (let i = 0; i < farPlanes; i++) {
+      this.aircraft.push(this.createPlane({ preferNear: false }));
     }
     for (let i = 0; i < this.heliCount; i++) {
       this.aircraft.push(this.createHelicopter());
     }
   }
 
-  createPlane() {
+  createPlane({ preferNear = Math.random() < 0.4 } = {}) {
     const nearby = nearestAirports(this.home.lat, this.home.lng, 10);
-    let origin = pick(nearby);
+    let origin = preferNear ? pick(nearby) : pick(AIRPORTS);
     let destination = pick(AIRPORTS);
     let guard = 0;
     while (destination.icao === origin.icao && guard++ < 30) {
@@ -87,18 +97,27 @@ export class FlightSimulator {
       totalDist * progress
     );
 
-    const towardHome = progress > 0.2 && progress < 0.8 && Math.random() < 0.6;
     let lat = pos.lat;
     let lng = pos.lng;
-    if (towardHome) {
+    if (preferNear) {
       const near = destinationPoint(
         this.home.lat,
         this.home.lng,
         rand(0, 360),
-        rand(5, this.radiusKm * 0.85)
+        rand(5, this.radiusKm * 0.9)
       );
       lat = near.lat;
       lng = near.lng;
+    } else if (Math.random() < 0.35) {
+      // Keep some long-haul traffic visible in the wide ring
+      const far = destinationPoint(
+        this.home.lat,
+        this.home.lng,
+        rand(0, 360),
+        rand(this.radiusKm * 1.2, this.wideRadiusKm * 0.95)
+      );
+      lat = far.lat;
+      lng = far.lng;
     }
 
     const heading = bearingDeg(lat, lng, destination.lat, destination.lng);
@@ -222,11 +241,16 @@ export class FlightSimulator {
 
     this.aircraft = this.aircraft.filter((ac) => {
       const d = haversineKm(this.home.lat, this.home.lng, ac.lat, ac.lng);
-      return d < this.radiusKm * 2.5;
+      return d < this.wideRadiusKm * 1.35;
     });
 
     while (this.aircraft.filter((a) => a.category === 'plane').length < this.planeCount) {
-      this.aircraft.push(this.createPlane());
+      const nearCount = this.aircraft.filter(
+        (a) =>
+          a.category === 'plane' &&
+          haversineKm(this.home.lat, this.home.lng, a.lat, a.lng) <= this.radiusKm
+      ).length;
+      this.aircraft.push(this.createPlane({ preferNear: nearCount < this.planeCount * 0.4 }));
     }
     while (this.aircraft.filter((a) => a.category === 'helicopter').length < this.heliCount) {
       this.aircraft.push(this.createHelicopter());
@@ -304,9 +328,10 @@ export class FlightSimulator {
     ac.trail = (ac.trail || []).filter((p) => p.t >= cutoff).slice(-40);
   }
 
-  getSnapshot(radiusKm = this.radiusKm) {
+  getSnapshot(radiusKm = this.wideRadiusKm, homeRadiusKm = this.radiusKm) {
     this.tick();
-    const r = radiusKm || this.radiusKm;
+    const r = radiusKm || this.wideRadiusKm;
+    const nearR = homeRadiusKm || this.radiusKm;
     const homeAlt = this.home.altM || 0;
 
     return this.aircraft
@@ -321,6 +346,7 @@ export class FlightSimulator {
           ac.altitudeM
         );
         const bearingFromHome = bearingDeg(this.home.lat, this.home.lng, ac.lat, ac.lng);
+        const zone = groundDistanceKm <= nearR ? 'near' : 'far';
         return {
           id: ac.id,
           icao24: ac.icao24,
@@ -353,6 +379,10 @@ export class FlightSimulator {
           squawk: ac.squawk,
           onGround: ac.onGround,
           phase: ac.phase,
+          zone,
+          passengersVisible: false,
+          passengerNote:
+            'Yolcu listesi bu sistemde görünmez. ADS-B yalnızca uçak konum/kimlik yayınlar; yolcu verisi özel ve yasal olarak kapalıdır.',
           groundDistanceKm: Number(groundDistanceKm.toFixed(2)),
           distance3dKm: Number(distance3dKm.toFixed(2)),
           bearingFromHome: Math.round(bearingFromHome),

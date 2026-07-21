@@ -1,17 +1,31 @@
-# SkyWatch — Ev Çevresi Uçuş Takibi
+# SkyWatch — Ev + Bölgesel Uçuş Takibi
 
-Açık kaynaklı, simülasyonlu (ve isteğe bağlı canlı ADS-B) uçak / helikopter takip uygulaması. Ev konumunuzun çevresindeki trafiği haritada gösterir; hız, mesafe, irtifa ve rota bilgilerini canlı günceller.
+Açık kaynaklı uçuş takip uygulaması. Ev çevresi **ve** bölgesel (uzak) hava trafiğini haritada gösterir; hız, irtifa, mesafe ve rota bilgilerini canlı günceller.
+
+## Bu uygulama neye yarar?
+
+Üstünden veya bölgenden geçen uçak/helikopterleri görmek; ne kadar uzakta ve yüksekte olduklarını, nereden nereye gittiklerini izlemek için.
+
+### Kimler kullanır?
+- Havaalanı / uçuş yolu yakınında oturanlar
+- Havacılık meraklıları ve öğrenciler
+- Açık kaynak / eğitim projeleri
+
+### Ne kazanırsın?
+- Anlık konum, yer hızı, irtifa, yön
+- Eve yatay ve 3B mesafe
+- Rota (nereden → nereye)
+- Ev yakını + uzak bölge görünümü
+
+### Uçakta kimler var?
+**Bilinemez.** ADS-B yolcu listesi vermez; yalnızca uçak konum ve kimliğini (çağrı adı) yayınlar. Yolcu verisi havayolu/güvenlik verisidir ve kamuya açık değildir.
 
 ## Özellikler
 
-- **Simülasyon modu** — Ev çevresinde gerçekçi uçak ve helikopter trafiği
-- **Canlı mod** — [OpenSky Network](https://opensky-network.org/) ADS-B verisi (erişilemezse simülasyona düşer)
-- **Ev konumu** — Tarayıcı konumu veya haritadan seçim
-- **Yer hızı** — km/s ve knot
-- **İrtifa** — feet / metre ve eve göre yerden yükseklik
-- **Mesafe** — Yatay mesafe, 3B eğik menzil, yön (pusula)
-- **Rota** — Nereden → nereye
-- **Canlı takip** — Seçili uçağı haritada izleme ve iz (trail)
+- **Kapsam:** Ev / İkisi / Bölge
+- **Simülasyon** ve **Canlı ADS-B** (OpenSky; erişilemezse simülasyon yedeği)
+- Ev konumu (GPS veya haritadan seçim)
+- Yer hızı, irtifa, yatay/3B mesafe, rota, canlı takip
 
 ## Proje yapısı
 
@@ -29,45 +43,22 @@ npm run install:all
 ## Çalıştırma
 
 ```bash
-# API (port 3001)
-npm run server
-
-# Web (port 5173) — ayrı terminal
-npm run web
+npm run server   # API :3001
+npm run web      # http://localhost:5173
 ```
-
-Tarayıcı: http://localhost:5173
 
 ## API
 
 | Endpoint | Açıklama |
 |----------|----------|
 | `GET /api/health` | Sağlık kontrolü |
-| `GET /api/home` | Ev konumu, yarıçap, mod |
-| `POST /api/home` | Ev / yarıçap / mod güncelle |
-| `GET /api/flights` | Uçuş listesi (`mode`, `radiusKm`, `category`) |
+| `GET /api/about` | Amaç, kullanıcılar, sınırlar |
+| `GET /api/home` | Ev, yarıçaplar, kapsam, mod |
+| `POST /api/home` | Ev / yarıçap / kapsam / mod güncelle |
+| `GET /api/flights` | Uçuş listesi (`scope`, `radiusKm`, `wideRadiusKm`, `mode`, `category`) |
 
-### `POST /api/home` gövdesi
-
-```json
-{
-  "lat": 41.0082,
-  "lng": 28.9784,
-  "altM": 40,
-  "name": "Evim",
-  "radiusKm": 80,
-  "mode": "simulation"
-}
-```
-
-`mode`: `simulation` | `live`
-
-## Notlar
-
-- Varsayılan ev konumu İstanbul merkezidir; “Konumumu ev yap” veya haritadan seçerek değiştirin.
-- OpenSky anonim erişimi hız sınırlıdır; yoğun kullanımda simülasyon yedeği devreye girer.
-- Mobil klasörü bu sürümde güncellenmemiştir; birincil deneyim web üzerindedir.
+`scope`: `near` | `wide` | `both`
 
 ## Lisans
 
-MIT — Veri kaynağı (canlı mod): OpenSky Network.
+MIT — Canlı veri: OpenSky Network.

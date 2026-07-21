@@ -304,6 +304,10 @@ input[type='range'] {
   animation-delay: 0.08s;
 }
 
+.stats-panel.four {
+  grid-template-columns: repeat(4, 1fr);
+}
+
 .stat {
   text-align: center;
   padding: 0.35rem 0.2rem;
@@ -436,6 +440,124 @@ input[type='range'] {
 .cat.helicopter {
   background: rgba(62, 207, 142, 0.16);
   color: var(--heli);
+}
+
+.badge-row {
+  display: inline-flex;
+  gap: 0.3rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.zone {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(255, 138, 92, 0.14);
+  color: var(--warn);
+}
+
+.zone.near {
+  background: rgba(94, 184, 255, 0.16);
+  color: var(--accent);
+}
+
+.privacy-note {
+  margin-top: 0.75rem;
+  padding: 0.65rem 0.7rem;
+  border-radius: 11px;
+  border: 1px solid rgba(255, 209, 102, 0.28);
+  background: rgba(255, 209, 102, 0.08);
+  color: #f3e2b0;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.about-btn {
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.about-btn:hover {
+  border-color: rgba(94, 184, 255, 0.45);
+}
+
+.about-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(2, 8, 14, 0.72);
+  backdrop-filter: blur(6px);
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.about-card {
+  width: min(560px, 100%);
+  max-height: min(86vh, 760px);
+  overflow: auto;
+  background: linear-gradient(180deg, #102033, #0a1520);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+  animation: rise 0.3s ease-out;
+}
+
+.about-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.1rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.about-head h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+}
+
+.about-body {
+  padding: 1rem 1.1rem 1.25rem;
+  color: #d5e4f0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.about-body h3 {
+  margin: 1rem 0 0.4rem;
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  color: var(--accent-2);
+}
+
+.about-body ul {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.about-body li {
+  margin: 0.25rem 0;
+}
+
+.warn-text {
+  color: #f3e2b0;
+  background: rgba(255, 209, 102, 0.08);
+  border: 1px solid rgba(255, 209, 102, 0.22);
+  border-radius: 12px;
+  padding: 0.7rem 0.8rem;
 }
 
 .dist {

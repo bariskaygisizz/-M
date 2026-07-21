@@ -94,6 +94,9 @@ function mapState(s, home, homeAlt) {
     distance3dKm: Number(distance3dKm.toFixed(2)),
     bearingFromHome: Math.round(bearingDeg(home.lat, home.lng, lat, lng)),
     trail: [],
+    passengersVisible: false,
+    passengerNote:
+      'Yolcu listesi görünmez. ADS-B yalnızca uçak konum ve kimliğini yayınlar.',
     source: 'opensky',
     updatedAt: Date.now()
   };

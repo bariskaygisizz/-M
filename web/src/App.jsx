@@ -3,11 +3,13 @@ import MapView from './components/MapView';
 import {
   categoryLabel,
   compassLabel,
+  fetchAbout,
   fetchFlights,
   formatRoute,
   getHome,
   phaseLabel,
-  setHome
+  setHome,
+  zoneLabel
 } from './lib/api';
 
 const POLL_MS = 1200;
@@ -15,9 +17,13 @@ const POLL_MS = 1200;
 export default function App() {
   const [home, setHomeState] = useState(null);
   const [radiusKm, setRadiusKm] = useState(80);
+  const [wideRadiusKm, setWideRadiusKm] = useState(900);
+  const [scope, setScope] = useState('both');
   const [mode, setMode] = useState('simulation');
   const [category, setCategory] = useState('all');
   const [flights, setFlights] = useState([]);
+  const [nearCount, setNearCount] = useState(0);
+  const [farCount, setFarCount] = useState(0);
   const [dataMode, setDataMode] = useState('simulation');
   const [selectedId, setSelectedId] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -26,18 +32,24 @@ export default function App() {
   const [followSelected, setFollowSelected] = useState(false);
   const [updatedAt, setUpdatedAt] = useState(null);
   const [clock, setClock] = useState(() => new Date());
+  const [showAbout, setShowAbout] = useState(false);
+  const [about, setAbout] = useState(null);
 
   const loadConfig = useCallback(async () => {
     const cfg = await getHome();
     setHomeState(cfg.home);
     setRadiusKm(cfg.radiusKm);
+    setWideRadiusKm(cfg.wideRadiusKm || 900);
+    setScope(cfg.scope || 'both');
     setMode(cfg.mode || 'simulation');
   }, []);
 
   const loadFlights = useCallback(async () => {
     try {
-      const data = await fetchFlights({ mode, radiusKm, category });
+      const data = await fetchFlights({ mode, radiusKm, wideRadiusKm, scope, category });
       setFlights(data.flights || []);
+      setNearCount(data.nearCount || 0);
+      setFarCount(data.farCount || 0);
       setDataMode(data.mode);
       setUpdatedAt(data.updatedAt);
       setHomeState(data.home);
@@ -47,7 +59,7 @@ export default function App() {
     } finally {
       setLoading(false);
     }
-  }, [mode, radiusKm, category]);
+  }, [mode, radiusKm, wideRadiusKm, scope, category]);
 
   useEffect(() => {
     loadConfig().catch((err) => setError(err.message));
@@ -80,6 +92,8 @@ export default function App() {
     const cfg = await setHome(payload);
     setHomeState(cfg.home);
     setRadiusKm(cfg.radiusKm);
+    setWideRadiusKm(cfg.wideRadiusKm || wideRadiusKm);
+    setScope(cfg.scope || scope);
     setMode(cfg.mode);
     setPickHomeMode(false);
     await loadFlights();
@@ -125,6 +139,16 @@ export default function App() {
     }
   };
 
+  const handleWideRadius = async (value) => {
+    const next = Number(value);
+    setWideRadiusKm(next);
+    try {
+      await setHome({ wideRadiusKm: next });
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
   const handleMode = async (next) => {
     setMode(next);
     try {
@@ -134,8 +158,29 @@ export default function App() {
     }
   };
 
+  const handleScope = async (next) => {
+    setScope(next);
+    try {
+      await setHome({ scope: next });
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const openAbout = async () => {
+    setShowAbout(true);
+    if (!about) {
+      try {
+        setAbout(await fetchAbout());
+      } catch (err) {
+        setError(err.message);
+      }
+    }
+  };
+
   const planes = flights.filter((f) => f.category === 'plane').length;
   const helis = flights.filter((f) => f.category === 'helicopter').length;
+  const mapWide = scope === 'near' ? radiusKm : wideRadiusKm;
 
   return (
     <div className={`app ${pickHomeMode ? 'picking' : ''}`}>
@@ -146,17 +191,20 @@ export default function App() {
           <div className="brand-mark" aria-hidden="true" />
           <div>
             <h1>SkyWatch</h1>
-            <p>Ev çevresi canlı uçuş takibi</p>
+            <p>Ev + bölgesel uçuş takibi</p>
           </div>
         </div>
 
         <div className="top-meta">
+          <button type="button" className="about-btn" onClick={openAbout}>
+            Ne işe yarar?
+          </button>
           <span className={`live-dot ${dataMode.includes('simulation') ? 'sim' : 'live'}`} />
           <span>
             {dataMode === 'opensky'
               ? 'Canlı ADS-B'
               : dataMode === 'simulation-fallback'
-                ? 'Simülasyon (OpenSky yedek)'
+                ? 'Simülasyon (yedek)'
                 : 'Simülasyon'}
           </span>
           <span className="sep">·</span>
@@ -170,6 +218,7 @@ export default function App() {
             <MapView
               home={home}
               radiusKm={radiusKm}
+              wideRadiusKm={mapWide}
               flights={flights}
               selectedId={selectedId}
               onSelect={setSelectedId}
@@ -181,6 +230,26 @@ export default function App() {
 
           <div className="hud-left">
             <div className="hud-panel controls-panel">
+              <label className="field">
+                <span>Kapsam</span>
+                <div className="seg">
+                  {[
+                    ['near', 'Ev'],
+                    ['both', 'İkisi'],
+                    ['wide', 'Bölge']
+                  ].map(([value, label]) => (
+                    <button
+                      key={value}
+                      type="button"
+                      className={scope === value ? 'on' : ''}
+                      onClick={() => handleScope(value)}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </label>
+
               <label className="field">
                 <span>Mod</span>
                 <div className="seg">
@@ -222,16 +291,30 @@ export default function App() {
               </label>
 
               <label className="field">
-                <span>Yarıçap: {radiusKm} km</span>
+                <span>Ev yarıçapı: {radiusKm} km</span>
                 <input
                   type="range"
                   min="15"
-                  max="200"
+                  max="250"
                   step="5"
                   value={radiusKm}
                   onChange={(e) => handleRadius(e.target.value)}
                 />
               </label>
+
+              {scope !== 'near' && (
+                <label className="field">
+                  <span>Bölge yarıçapı: {wideRadiusKm} km</span>
+                  <input
+                    type="range"
+                    min="200"
+                    max="1200"
+                    step="50"
+                    value={wideRadiusKm}
+                    onChange={(e) => handleWideRadius(e.target.value)}
+                  />
+                </label>
+              )}
 
               <div className="btn-row">
                 <button type="button" className="btn" onClick={handleLocateHome}>
@@ -247,18 +330,22 @@ export default function App() {
               </div>
             </div>
 
-            <div className="hud-panel stats-panel">
+            <div className="hud-panel stats-panel four">
               <div className="stat">
                 <strong>{loading ? '—' : flights.length}</strong>
-                <span>trafik</span>
+                <span>toplam</span>
               </div>
               <div className="stat">
-                <strong>{planes}</strong>
-                <span>uçak</span>
+                <strong>{nearCount}</strong>
+                <span>yakın</span>
               </div>
               <div className="stat">
-                <strong>{helis}</strong>
-                <span>helikopter</span>
+                <strong>{farCount}</strong>
+                <span>uzak</span>
+              </div>
+              <div className="stat">
+                <strong>{planes}/{helis}</strong>
+                <span>uçak/heli</span>
               </div>
             </div>
           </div>
@@ -272,9 +359,11 @@ export default function App() {
 
         <aside className="side">
           <div className="side-head">
-            <h2>Yakındaki trafik</h2>
+            <h2>Trafik listesi</h2>
             <p>
-              {home ? `${home.name} · ${home.lat.toFixed(3)}, ${home.lng.toFixed(3)}` : 'Yükleniyor…'}
+              {home
+                ? `${home.name} · yakın ${radiusKm} km · bölge ${wideRadiusKm} km`
+                : 'Yükleniyor…'}
             </p>
           </div>
 
@@ -287,13 +376,14 @@ export default function App() {
                 onClick={() => setSelectedId(ac.id)}
               >
                 <div className="fi-top">
-                  <span className={`cat ${ac.category}`}>{categoryLabel(ac.category)}</span>
+                  <span className="badge-row">
+                    <span className={`cat ${ac.category}`}>{categoryLabel(ac.category)}</span>
+                    <span className={`zone ${ac.zone}`}>{zoneLabel(ac.zone)}</span>
+                  </span>
                   <span className="dist">{ac.groundDistanceKm} km</span>
                 </div>
                 <strong className="callsign">{ac.callsign}</strong>
-                <div className="fi-meta">
-                  {formatRoute(ac.origin, ac.destination)}
-                </div>
+                <div className="fi-meta">{formatRoute(ac.origin, ac.destination)}</div>
                 <div className="fi-metrics">
                   <span>{ac.groundSpeedKmh} km/s</span>
                   <span>{ac.altitudeFt.toLocaleString('tr-TR')} ft</span>
@@ -302,7 +392,7 @@ export default function App() {
               </button>
             ))}
             {!loading && flights.length === 0 && (
-              <div className="empty">Bu yarıçapta trafik yok. Yarıçapı artırın veya simülasyonu deneyin.</div>
+              <div className="empty">Bu kapsamda trafik yok. Yarıçapı artırın.</div>
             )}
           </div>
 
@@ -310,8 +400,11 @@ export default function App() {
             <div className="detail-panel animate-in">
               <div className="detail-head">
                 <div>
-                  <span className={`cat ${selected.category}`}>
-                    {categoryLabel(selected.category)}
+                  <span className="badge-row">
+                    <span className={`cat ${selected.category}`}>
+                      {categoryLabel(selected.category)}
+                    </span>
+                    <span className={`zone ${selected.zone}`}>{zoneLabel(selected.zone)}</span>
                   </span>
                   <h3>{selected.callsign}</h3>
                   <p>
@@ -334,9 +427,7 @@ export default function App() {
               <div className="route-line">
                 <div>
                   <small>Nereden</small>
-                  <strong>
-                    {selected.origin.iata || selected.origin.city}
-                  </strong>
+                  <strong>{selected.origin.iata || selected.origin.city}</strong>
                   <span>{selected.origin.name}</span>
                 </div>
                 <div className="route-arrow" aria-hidden="true">
@@ -344,9 +435,7 @@ export default function App() {
                 </div>
                 <div>
                   <small>Nereye</small>
-                  <strong>
-                    {selected.destination.iata || selected.destination.city}
-                  </strong>
+                  <strong>{selected.destination.iata || selected.destination.city}</strong>
                   <span>{selected.destination.name}</span>
                 </div>
               </div>
@@ -365,7 +454,9 @@ export default function App() {
                 <div>
                   <small>Eve yatay mesafe</small>
                   <strong>{selected.groundDistanceKm} km</strong>
-                  <span>{compassLabel(selected.bearingFromHome)} {selected.bearingFromHome}°</span>
+                  <span>
+                    {compassLabel(selected.bearingFromHome)} {selected.bearingFromHome}°
+                  </span>
                 </div>
                 <div>
                   <small>3B mesafe</small>
@@ -387,6 +478,11 @@ export default function App() {
                 </div>
               </div>
 
+              <div className="privacy-note">
+                <strong>Yolcular:</strong> Bilinemez. ADS-B yolcu listesi vermez; yalnızca uçak
+                konum/kimlik yayınlar.
+              </div>
+
               <div className="detail-actions">
                 <button
                   type="button"
@@ -403,10 +499,68 @@ export default function App() {
           )}
 
           <footer className="side-foot">
-            Açık kaynak · OpenSky ADS-B · {updatedAt ? new Date(updatedAt).toLocaleTimeString('tr-TR') : '—'}
+            Açık kaynak · OpenSky ADS-B ·{' '}
+            {updatedAt ? new Date(updatedAt).toLocaleTimeString('tr-TR') : '—'}
           </footer>
         </aside>
       </main>
+
+      {showAbout && (
+        <div className="about-overlay" onClick={() => setShowAbout(false)} role="presentation">
+          <div
+            className="about-card"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="about-title"
+          >
+            <div className="about-head">
+              <h2 id="about-title">SkyWatch ne işe yarar?</h2>
+              <button type="button" className="icon-close" onClick={() => setShowAbout(false)}>
+                ×
+              </button>
+            </div>
+            {about ? (
+              <div className="about-body">
+                <p>{about.purpose}</p>
+
+                <h3>Kimler kullanır?</h3>
+                <ul>
+                  {about.whoUses.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+
+                <h3>Neden kullanır?</h3>
+                <ul>
+                  {about.whyUse.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+
+                <h3>Sen ne kazanırsın?</h3>
+                <ul>
+                  {about.whatYouGain.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+
+                <h3>Uçakta kimler var?</h3>
+                <p className="warn-text">{about.passengers}</p>
+
+                <h3>Ne göremezsin?</h3>
+                <ul>
+                  {about.whatYouCannot.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              <p className="about-body">Yükleniyor…</p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

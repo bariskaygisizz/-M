@@ -16,10 +16,18 @@ export async function setHome(payload) {
   return res.json();
 }
 
-export async function fetchFlights({ mode, radiusKm, category } = {}) {
+export async function fetchAbout() {
+  const res = await fetch(`${API_BASE}/about`);
+  if (!res.ok) throw new Error('Bilgi alınamadı');
+  return res.json();
+}
+
+export async function fetchFlights({ mode, radiusKm, wideRadiusKm, scope, category } = {}) {
   const params = new URLSearchParams();
   if (mode) params.set('mode', mode);
   if (radiusKm) params.set('radiusKm', String(radiusKm));
+  if (wideRadiusKm) params.set('wideRadiusKm', String(wideRadiusKm));
+  if (scope) params.set('scope', scope);
   if (category && category !== 'all') params.set('category', category);
 
   const res = await fetch(`${API_BASE}/flights?${params}`);
@@ -44,6 +52,10 @@ export function phaseLabel(phase) {
 
 export function categoryLabel(category) {
   return category === 'helicopter' ? 'Helikopter' : 'Uçak';
+}
+
+export function zoneLabel(zone) {
+  return zone === 'near' ? 'Eve yakın' : 'Uzak';
 }
 
 export function formatRoute(origin, destination) {
