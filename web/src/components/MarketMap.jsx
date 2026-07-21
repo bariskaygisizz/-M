@@ -13,18 +13,18 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow
 });
 
-function createColoredIcon(color, size = 16) {
+function createColoredIcon(color, size = 18, selected = false) {
   return L.divIcon({
-    className: 'custom-marker',
+    className: `custom-marker ${selected ? 'selected' : ''}`,
     html: `<div style="
       background:${color};
       width:${size}px;height:${size}px;
       border-radius:50%;
-      border:2.5px solid white;
-      box-shadow:0 2px 8px rgba(0,0,0,.28);
+      border:2px solid rgba(255,255,255,.92);
+      box-shadow:0 0 0 ${selected ? 8 : 5}px rgba(20,184,166,.18), 0 0 24px ${color}, 0 8px 18px rgba(0,0,0,.45);
     "></div>`,
-    iconSize: [size, size],
-    iconAnchor: [size / 2, size / 2]
+    iconSize: [size + 18, size + 18],
+    iconAnchor: [(size + 18) / 2, (size + 18) / 2]
   });
 }
 
@@ -43,6 +43,11 @@ function MapController({ focus, userLocation }) {
     }
   }, [userLocation, focus, map]);
 
+  useEffect(() => {
+    const t = setTimeout(() => map.invalidateSize(), 150);
+    return () => clearTimeout(t);
+  }, [map]);
+
   return null;
 }
 
@@ -59,21 +64,21 @@ export default function MarketMap({
     ? [selected.lat, selected.lng]
     : userLocation
       ? [userLocation.lat, userLocation.lng]
-      : [41.02, 29.0];
+      : [41.015, 28.98];
 
   return (
-    <MapContainer center={center} zoom={12} className="map-container" scrollWheelZoom>
+    <MapContainer center={center} zoom={12} className="map-container" scrollWheelZoom zoomControl={false}>
       <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; CARTO'
+        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
       />
       <MapController focus={focus || selected} userLocation={userLocation} />
 
       {userLocation && (
         <CircleMarker
           center={[userLocation.lat, userLocation.lng]}
-          radius={9}
-          pathOptions={{ color: '#e8a317', fillColor: '#e8a317', fillOpacity: 0.95, weight: 2 }}
+          radius={10}
+          pathOptions={{ color: '#fbbf24', fillColor: '#f59e0b', fillOpacity: 0.95, weight: 3 }}
         >
           <Popup>Konumunuz</Popup>
         </CircleMarker>
@@ -83,12 +88,12 @@ export default function MarketMap({
         <CircleMarker
           key={`heat-${p.id}`}
           center={[p.lat, p.lng]}
-          radius={6 + Math.min(10, (p.subscriptions || 0) * 2)}
+          radius={8 + Math.min(18, (p.subscriptions || 0) * 3)}
           pathOptions={{
-            color: '#0f5c4c',
-            fillColor: '#2a9d8f',
-            fillOpacity: 0.35,
-            weight: 1
+            color: '#22d3ee',
+            fillColor: '#14b8a6',
+            fillOpacity: 0.22,
+            weight: 2
           }}
         >
           <Popup>
@@ -105,7 +110,11 @@ export default function MarketMap({
         <Marker
           key={store.id}
           position={[store.lat, store.lng]}
-          icon={createColoredIcon(STORE_COLORS[store.type] || '#0f5c4c', selectedId === store.id ? 20 : 16)}
+          icon={createColoredIcon(
+            STORE_COLORS[store.type] || '#14b8a6',
+            selectedId === store.id ? 24 : 18,
+            selectedId === store.id
+          )}
           eventHandlers={{ click: () => onSelect?.(store.id) }}
         >
           <Popup>

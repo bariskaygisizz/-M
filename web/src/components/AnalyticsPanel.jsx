@@ -13,16 +13,16 @@ export default function AnalyticsPanel() {
       .catch((err) => setError(err.message));
   }, []);
 
-  if (error) return <div className="banner error">{error}</div>;
-  if (!data) return <div className="loading-block">Analitik yükleniyor...</div>;
+  if (error) return <div className="overlay-page"><div className="banner error glass-panel">{error}</div></div>;
+  if (!data) return <div className="overlay-page"><div className="loading-block glass-panel">Analitik yükleniyor...</div></div>;
 
   const { summary, districts, eventTypes, storeSubs, heatPoints, recentEvents } = data;
 
   return (
-    <div className="analytics-layout">
-      <header className="section-intro">
+    <div className="overlay-page analytics-layout">
+      <header className="section-intro glass-panel">
         <p className="eyebrow">Veri toplama & abone haritası</p>
-        <h2>Aboneler nerede, nasıl belli olur?</h2>
+        <h2>Harita üstü talep radarı</h2>
         <p>
           Müşteri konum açtığında, arama yaptığında, mağaza görüntülediğinde veya abone olduğunda
           sistem olay kaydı tutar. Böylece hangi semtte talep yoğun, hangi mağazanın abonesi nerede
@@ -31,26 +31,26 @@ export default function AnalyticsPanel() {
       </header>
 
       <div className="stat-strip">
-        <div>
+        <div className="glass-panel">
           <span>Müşteri</span>
           <strong>{summary.customers}</strong>
         </div>
-        <div>
+        <div className="glass-panel">
           <span>Abonelik</span>
           <strong>{summary.totalSubscriptions}</strong>
         </div>
-        <div>
+        <div className="glass-panel">
           <span>Olay</span>
           <strong>{summary.events}</strong>
         </div>
-        <div>
+        <div className="glass-panel">
           <span>Sipariş</span>
           <strong>{summary.orders}</strong>
         </div>
       </div>
 
       <div className="analytics-grid">
-        <section className="soft-block map-block">
+        <section className="soft-block map-block glass-panel">
           <h3>Abone / müşteri konumları</h3>
           <p className="muted">Yeşil daireler müşteri konumlarını; büyüklük abonelik sayısını gösterir.</p>
           <div className="map-frame">
@@ -58,7 +58,7 @@ export default function AnalyticsPanel() {
           </div>
         </section>
 
-        <section className="soft-block">
+        <section className="soft-block glass-panel">
           <h3>İlçeye göre yoğunluk</h3>
           <div className="bar-list">
             {districts
@@ -83,7 +83,7 @@ export default function AnalyticsPanel() {
           </div>
         </section>
 
-        <section className="soft-block">
+        <section className="soft-block glass-panel">
           <h3>Toplanan olay türleri</h3>
           <ul className="event-type-list">
             {Object.entries(eventTypes).map(([type, count]) => (
@@ -99,7 +99,7 @@ export default function AnalyticsPanel() {
           </p>
         </section>
 
-        <section className="soft-block">
+        <section className="soft-block glass-panel">
           <h3>Mağaza abone sıralaması</h3>
           <ol className="rank-list">
             {storeSubs.map((s, i) => (
@@ -115,7 +115,7 @@ export default function AnalyticsPanel() {
           </ol>
         </section>
 
-        <section className="soft-block full-span">
+        <section className="soft-block full-span glass-panel">
           <h3>Son olaylar (canlı veri akışı)</h3>
           <div className="table-wrap">
             <table>

@@ -26,13 +26,13 @@ export default function ProfilesPanel() {
       .catch((err) => setError(err.message));
   }, [selectedCustomer]);
 
-  if (error && !customers.length) return <div className="banner error">{error}</div>;
+  if (error && !customers.length) return <div className="overlay-page"><div className="banner error glass-panel">{error}</div></div>;
 
   return (
-    <div className="profiles-layout">
-      <header className="section-intro">
+    <div className="overlay-page profiles-layout">
+      <header className="section-intro glass-panel">
         <p className="eyebrow">Profiller</p>
-        <h2>Müşteri ve işletme profilleri</h2>
+        <h2>Müşteri ve işletme kimlikleri</h2>
         <p>
           İki taraf ayrı kimliklerle yaşar: müşteri konum + tercihler + abonelikler; işletme mağaza
           bilgisi + stok + abone kitlesi.
@@ -40,7 +40,7 @@ export default function ProfilesPanel() {
       </header>
 
       <div className="profiles-grid">
-        <section className="soft-block">
+        <section className="soft-block glass-panel">
           <h3>Müşteriler</h3>
           <div className="person-list">
             {customers.map((c) => (
@@ -59,7 +59,7 @@ export default function ProfilesPanel() {
           </div>
         </section>
 
-        <section className="soft-block">
+        <section className="soft-block glass-panel">
           <h3>Seçili müşteri profili</h3>
           {detail ? (
             <>
@@ -111,7 +111,7 @@ export default function ProfilesPanel() {
           )}
         </section>
 
-        <section className="soft-block full-span">
+        <section className="soft-block full-span glass-panel">
           <h3>İşletme / satıcı profilleri</h3>
           <div className="biz-grid">
             {sellers.map((s) => (

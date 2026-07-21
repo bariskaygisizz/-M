@@ -1,85 +1,69 @@
 const STEPS = [
   {
     id: 1,
-    role: 'Müşteri',
-    title: 'Uygulamayı aç ve paneli seç',
-    screen: 'Ana giriş (Landing)',
-    body: 'YakınMarket açılınca dört kapı görürsün: Müşteri, Satıcı, Profiller, Analitik. Alışveriş için Müşteri panelini seç. İlk kez kullanıyorsan bu Kılavuz ekranından adımları izle.',
-    tips: ['Demo hesaplar hazırdır — giriş zorunlu değil.', 'Mobilde de aynı menü üstte yer alır.']
+    role: 'Misafir',
+    title: 'Harita ilk ekran',
+    screen: 'Misafir Keşif',
+    body: 'YakınMarket açılır açılmaz tam ekran harita gelir. Mağazaları, ürün stoklarını, ETA bilgisini ve mağaza detayını giriş yapmadan görebilirsin.',
+    tips: ['Stok görüntüleme misafire açık.', 'Konum vermezsen Kadıköy demo konumu kullanılır.']
   },
   {
     id: 2,
     role: 'Müşteri',
-    title: 'Konumunu aç',
-    screen: 'Müşteri paneli → Konumumu aç',
-    body: '“Konumumu aç”a bas. Tarayıcı izin ister. İzin verirsen gerçek konumun kullanılır; vermezsen Kadıköy demo konumu ile devam edilir. Bu an veri toplama olayına `location_open` olarak yazılır — abone yoğunluğu buradan belli olur.',
-    tips: ['Sarı nokta haritada seni gösterir.', 'Her konum açılışı analitikte kayda geçer.']
+    title: 'Giriş gereken müşteri aksiyonları',
+    screen: 'AuthModal',
+    body: 'Sipariş vermek, yorum yapmak ve satıcıya mesaj göndermek için müşteri hesabı açılır. Misafir bu aksiyonlara tıklayınca müşteri giriş/kayıt modalı gelir.',
+    tips: ['Demo: deniz@ornek.com / demo123.', 'Oturum ym_token ve ym_user ile saklanır.']
   },
   {
     id: 3,
-    role: 'Müşteri',
-    title: 'Yakındaki mağaza ve ürünü bul',
-    screen: 'Harita + Mağazalar / Ürünler',
-    body: 'Haritada market (yeşil), bakkal (turuncu), sütçü (mavi) görünür. Solda mesafe, stokta ürün sayısı ve tahmini teslimat süresi (dk) listelenir. Üstte “süt”, “ekmek” gibi ara — hangi fiziksel mağazada malzeme var anında çıkar.',
-    tips: ['Ürünler sekmesinde stok durumu renkli etiketlidir.', 'Stok yoksa “ne zaman gelir” tarihi gösterilir.']
+    role: 'Satıcı',
+    title: 'Satıcı kayıt zorunlu',
+    screen: 'Satıcı Giriş/Kayıt',
+    body: 'Satıcı haritası, ürün yükleme, stok/fiyat, reklam postu, sipariş yönetimi ve AI chatbot sadece satıcı hesabıyla açılır. Kayıtta mağaza adı, tür, ilçe ve adres alınır.',
+    tips: ['Satıcı açılışında kayıt modu öne çıkar.', 'Demo: ayse@gunesmarket.tr / demo123.']
   },
   {
     id: 4,
-    role: 'Müşteri',
-    title: 'Mağaza detayı, abonelik ve sipariş',
-    screen: 'Mağaza detay yaprağı',
-    body: 'Mağazaya tıkla: adres, mesafe, ETA, puan, ürün stokları açılır. “Mağazaya abone ol” ile takip et — stok ve kampanya için bağlanırsın. Sepete ekle → Sipariş ver. Siparişler sekmesinde hazırlanıyor / yolda / teslim durumunu takip et.',
-    tips: ['Tek siparişte tek mağaza.', 'ETA mesafe + mağaza teslimat tabanına göre hesaplanır.']
+    role: 'Keşfet',
+    title: 'Feed akışı',
+    screen: 'Keşfet',
+    body: 'Mağaza postları Instagram benzeri dikey kartlarla görünür. Reklam rozeti, fotoğraf/video, beğeni, yorum ve mesaj aksiyonları vardır.',
+    tips: ['Yorum ve mesaj auth gate ile korunur.', 'Satıcı panelinden yayınlanan post feed’e düşer.']
   },
   {
     id: 5,
     role: 'Satıcı',
-    title: 'Satıcı paneline geç',
-    screen: 'Satıcı paneli',
-    body: 'Üst menüden Satıcı’yı seç. Demo satıcıyı değiştirerek farklı işletmeleri dene (Güneş Market, Boğaz Sütçü vb.). Stok yönetimi, siparişler, aboneler ve işletme profili sekmeleri vardır.',
-    tips: ['Stok sayısını güncelle, yoksa gelme tarihi gir.', 'Siparişi “Yola çıktı” / “Teslim edildi” yap.']
+    title: 'AI chatbot',
+    screen: 'Satıcı haritası',
+    body: 'Sağ alttaki AI Kılavuz stok, fiyat ve reklam önerileri verir. Backend varsa /api/market/chatbot çağrılır; demo modda yerel stok bağlamıyla cevap üretir.',
+    tips: ['Azalan stokları sor.', 'Reklam metni için kısa prompt yaz.']
   },
   {
     id: 6,
-    role: 'Satıcı',
-    title: 'Abonelerini gör',
-    screen: 'Satıcı → Aboneler',
-    body: 'Kim abone, hangi ilçede, son ne zaman aktif — liste halinde. Bu liste Analitik’teki harita ile birleşince “abonelerim nerede yoğun?” sorusu cevaplanır.',
-    tips: ['Abone sayısı mağaza kartında da görünür.', 'Doğrulanmış işletmeler rozetli görünür.']
-  },
-  {
-    id: 7,
-    role: 'Sistem',
-    title: 'Profilleri incele',
-    screen: 'Profiller',
-    body: 'Müşteri profili: konum, tercihler, abone mağazalar, sipariş geçmişi. İşletme profili: adres, çalışma saati, satıcı bilgisi, abone sayısı, onay durumu. İki panel aynı ekosistemin iki yüzüdür.',
-    tips: ['Müşteri listesinden birini seçerek detayı aç.', 'İşletme kartları tüm satıcıları yan yana gösterir.']
-  },
-  {
-    id: 8,
-    role: 'Sistem',
-    title: 'Veri toplama ve abone haritası',
+    role: 'Analitik',
+    title: 'Talep ve abone haritası',
     screen: 'Analitik',
-    body: 'Burada abonelerin / müşterilerin harita üzerindeki dağılımı, ilçe yoğunluk çubukları, olay türleri (konum, arama, görüntüleme, abone, sipariş) ve mağaza abone sıralaması vardır. Kullanıcı her önemli aksiyonda veri bırakır; işletmeler “nerede talep var?”ı görür.',
-    tips: ['Müşteri panelinde konum aç / ara — olaylar buraya düşer.', 'Yeşil daire büyüdükçe abonelik artar.']
+    body: 'Konum, arama, mağaza görüntüleme, abonelik ve sipariş olayları yoğunluk haritasına dönüşür. Satıcılar hangi ilçede talep oluştuğunu görür.',
+    tips: ['Teal daireler müşteri/abone yoğunluğunu gösterir.', 'İlçe barları canlı olay sayılarını özetler.']
   }
 ];
 
 export default function GuidePanel() {
   return (
-    <div className="guide-layout">
-      <header className="section-intro guide-hero">
+    <div className="overlay-page guide-layout">
+      <header className="section-intro guide-hero glass-panel">
         <p className="eyebrow">Kullanım kılavuzu</p>
-        <h2>Adım adım ekranlar</h2>
+        <h2>Map-first YakınMarket akışı</h2>
         <p>
-          YakınMarket, klasik e-ticaretten farklı olarak önce konum ve fiziksel mağaza stokunu gösterir.
-          Aşağıda her ekranı sırayla anlatıyoruz.
+          İstanbul ulaşım haritalarındaki gibi önce canvas, sonra yüzen paneller. Misafir keşif serbest;
+          satıcı araçları ve sosyal etkileşimler hesapla korunur.
         </p>
       </header>
 
       <div className="guide-flow">
         {STEPS.map((step, index) => (
-          <article key={step.id} className="guide-step animate-in" style={{ animationDelay: `${index * 0.05}s` }}>
+          <article key={step.id} className="guide-step glass-panel animate-in" style={{ animationDelay: `${index * 0.05}s` }}>
             <div className="guide-num">{step.id}</div>
             <div className="guide-body">
               <div className="guide-tags">
@@ -116,14 +100,13 @@ export default function GuidePanel() {
         ))}
       </div>
 
-      <section className="soft-block guide-summary">
+      <section className="soft-block guide-summary glass-panel">
         <h3>Kısa özet</h3>
         <ol>
-          <li>Konum aç → yakındaki fiziksel mağazalar</li>
-          <li>Ürün / stok / kaç dk gelir gör</li>
-          <li>Sipariş ver ve takip et</li>
-          <li>Satıcı stok ve siparişi yönetir</li>
-          <li>Abonelik + olaylar ile “nerede talep var” netleşir</li>
+          <li>Misafir haritada ürün/stok/ETA görür.</li>
+          <li>Müşteri giriş yapınca sipariş, yorum ve mesaj açılır.</li>
+          <li>Satıcı kayıt olmadan ürün, stok, reklam ve chatbot araçlarına giremez.</li>
+          <li>Feed ve analitik harita üstü ekosistemi tamamlar.</li>
         </ol>
       </section>
     </div>
