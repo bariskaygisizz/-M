@@ -1,82 +1,64 @@
-# İstanbul Kart Harita
+# SkyWatch — Ev + Bölgesel Uçuş Takibi
 
-İstanbul Kart **Biletmatik** ve **dolum noktalarını** haritada gösteren web ve mobil uygulama.
+Açık kaynaklı uçuş takip uygulaması. Ev çevresi **ve** bölgesel (uzak) hava trafiğini haritada gösterir; hız, irtifa, mesafe ve rota bilgilerini canlı günceller.
 
-Veriler [İBB Açık Veri Portalı](https://data.ibb.gov.tr/dataset/istanbulkart-dolum-merkezi-bilgileri) üzerinden BELBİM tarafından yayınlanan İstanbulkart dolum merkezi bilgilerinden alınır.
+## Bu uygulama neye yarar?
+
+Üstünden veya bölgenden geçen uçak/helikopterleri görmek; ne kadar uzakta ve yüksekte olduklarını, nereden nereye gittiklerini izlemek için.
+
+### Kimler kullanır?
+- Havaalanı / uçuş yolu yakınında oturanlar
+- Havacılık meraklıları ve öğrenciler
+- Açık kaynak / eğitim projeleri
+
+### Ne kazanırsın?
+- Anlık konum, yer hızı, irtifa, yön
+- Eve yatay ve 3B mesafe
+- Rota (nereden → nereye)
+- Ev yakını + uzak bölge görünümü
+
+### Uçakta kimler var?
+**Bilinemez.** ADS-B yolcu listesi vermez; yalnızca uçak konum ve kimliğini (çağrı adı) yayınlar. Yolcu verisi havayolu/güvenlik verisidir ve kamuya açık değildir.
 
 ## Özellikler
 
-- Haritada Biletmatik, Biletmatik 4, bayi ve dolum merkezi noktaları
-- İlçe ve anahtar kelime ile arama
-- Nokta tipine göre filtreleme
-- Konumunuza göre yakındaki noktaları listeleme
-- Web (masaüstü/mobil tarayıcı) ve React Native (Expo) mobil uygulama
+- **Kapsam:** Ev / İkisi / Bölge
+- **Simülasyon** ve **Canlı ADS-B** (OpenSky; erişilemezse simülasyon yedeği)
+- Ev konumu (GPS veya haritadan seçim)
+- Yer hızı, irtifa, yatay/3B mesafe, rota, canlı takip
 
 ## Proje yapısı
 
 ```
-├── data/locations.json      # Senkronize edilmiş konum verisi
-├── server/                  # Express API
-├── web/                     # React + Leaflet web uygulaması
-└── mobile/                  # Expo React Native mobil uygulama
+├── server/          # Express API + uçuş simülatörü + OpenSky proxy
+└── web/             # React + Leaflet harita arayüzü
 ```
 
 ## Kurulum
 
 ```bash
-# Bağımlılıkları yükle
 npm run install:all
-
-# İBB'den güncel veriyi çek
-npm run sync-data
-
-# API sunucusunu başlat (port 3001)
-npm run server
 ```
 
-Ayrı bir terminalde web uygulaması:
+## Çalıştırma
 
 ```bash
-npm run web
+npm run server   # API :3001
+npm run web      # http://localhost:5173
 ```
 
-Tarayıcıda: http://localhost:5173
-
-## Mobil uygulama
-
-API sunucusu çalışırken:
-
-```bash
-cd mobile
-EXPO_PUBLIC_API_URL=http://<bilgisayar-ip>:3001/api npm start
-```
-
-Fiziksel cihazda test ederken `localhost` yerine bilgisayarınızın yerel IP adresini kullanın.
-
-## API uç noktaları
+## API
 
 | Endpoint | Açıklama |
 |----------|----------|
 | `GET /api/health` | Sağlık kontrolü |
-| `GET /api/meta` | İlçe listesi, tipler, özet |
-| `GET /api/locations` | Filtrelenmiş konum listesi |
+| `GET /api/about` | Amaç, kullanıcılar, sınırlar |
+| `GET /api/home` | Ev, yarıçaplar, kapsam, mod |
+| `POST /api/home` | Ev / yarıçap / kapsam / mod güncelle |
+| `GET /api/flights` | Uçuş listesi (`scope`, `radiusKm`, `wideRadiusKm`, `mode`, `category`) |
 
-### `/api/locations` parametreleri
-
-- `type` — Virgülle ayrılmış tipler (ör. `Biletmatik,Biletmatik 4`)
-- `district` — İlçe adı
-- `q` — Arama metni
-- `lat`, `lng`, `radiusKm` — Yakındaki noktalar
-- `limit` — Maksimum sonuç (varsayılan 200)
-
-## Veri güncelleme
-
-```bash
-npm run sync-data
-```
-
-Script, İBB CKAN API üzerinden 2023–2025 veri setlerini birleştirir ve `data/locations.json` dosyasını oluşturur.
+`scope`: `near` | `wide` | `both`
 
 ## Lisans
 
-Konum verisi: İstanbul Büyükşehir Belediyesi Açık Veri Lisansı (BELBİM / İBB).
+MIT — Canlı veri: OpenSky Network.

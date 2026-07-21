@@ -1,125 +1,215 @@
 import cors from 'cors';
 import express from 'express';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import { FlightSimulator } from './lib/simulator.js';
+import { fetchOpenSkyFlights } from './lib/opensky.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DATA_FILE = path.join(__dirname, '../data/locations.json');
 const PORT = process.env.PORT || 3001;
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-function loadData() {
-  if (!fs.existsSync(DATA_FILE)) {
-    return null;
-  }
-  return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
-}
+const state = {
+  home: {
+    lat: 41.0082,
+    lng: 28.9784,
+    altM: 40,
+    name: 'Ev'
+  },
+  radiusKm: 80,
+  wideRadiusKm: 900,
+  scope: 'both', // near | wide | both
+  mode: 'simulation' // simulation | live
+};
 
-function haversineKm(lat1, lng1, lat2, lng2) {
-  const toRad = (deg) => (deg * Math.PI) / 180;
-  const dLat = toRad(lat2 - lat1);
-  const dLng = toRad(lng2 - lng1);
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
-  return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+const simulator = new FlightSimulator({
+  home: state.home,
+  radiusKm: state.radiusKm,
+  wideRadiusKm: state.wideRadiusKm,
+  planeCount: 36,
+  heliCount: 5
+});
+
+setInterval(() => simulator.tick(), 1000);
+
+function annotateFlights(flights, homeRadiusKm = state.radiusKm) {
+  return flights.map((f) => ({
+    ...f,
+    zone: f.groundDistanceKm <= homeRadiusKm ? 'near' : 'far',
+    passengersVisible: false,
+    passengerNote:
+      f.passengerNote ||
+      'Yolcu listesi görünmez. ADS-B yalnızca uçak konum ve kimliğini yayınlar.'
+  }));
 }
 
 app.get('/api/health', (_req, res) => {
-  res.json({ ok: true, service: 'istanbul-kart-harita-api' });
+  res.json({
+    ok: true,
+    service: 'skywatch-flight-tracker',
+    mode: state.mode,
+    scope: state.scope,
+    aircraft: simulator.aircraft.length
+  });
 });
 
-app.get('/api/locations', (req, res) => {
-  const data = loadData();
-  if (!data) {
-    return res.status(503).json({
-      error: 'Konum verisi henüz yüklenmedi. Önce npm run sync-data çalıştırın.'
-    });
+app.get('/api/about', (_req, res) => {
+  res.json({
+    name: 'SkyWatch',
+    purpose:
+      'Ev çevresi ve bölgesel hava trafiğini haritada izlemek: hız, irtifa, mesafe, rota ve canlı konum.',
+    whoUses: [
+      'Havaalanı / güzergâh yakınında oturanlar (gürültü ve geçiş farkındalığı)',
+      'Havacılık meraklıları ve öğrencilerin öğrenmesi',
+      'Açık kaynak / eğitim projeleri',
+      'Basit operasyonel farkındalık isteyen küçük ekipler (ADS-B canlı mod)'
+    ],
+    whyUse: [
+      'Üstünden geçen uçağın ne kadar uzakta ve ne yükseklikte olduğunu görmek',
+      'Nereden nereye gittiğini anlamak',
+      'Helikopter ile uçağı ayırt etmek',
+      'Simülasyonla güvenli öğrenmek; canlı modda gerçek ADS-B bakmak'
+    ],
+    whatYouGain: [
+      'Anlık konum, yer hızı, irtifa, yön',
+      'Eve yatay / 3B mesafe',
+      'Rota (nereden → nereye)',
+      'Ev + uzak bölge görünümü'
+    ],
+    whatYouCannot: [
+      'Uçaktaki yolcuların kim olduğu (yolcu listesi gizli / yasal olarak kapalı)',
+      'Koltuk, bagaj, bilet veya kişisel veri',
+      'Askeri / kapalı/şifreli yayınlar her zaman görünmez'
+    ],
+    passengers:
+      'Hayır — bu uygulama ve ADS-B ile uçakta kimlerin olduğu bilinemez. Görünen şey uçak kimliği (çağrı adı), konum ve hareket verisidir; yolcu manifestosu havayolu/güvenlik verisidir ve kamuya açık değildir.'
+  });
+});
+
+app.get('/api/home', (_req, res) => {
+  res.json({
+    home: state.home,
+    radiusKm: state.radiusKm,
+    wideRadiusKm: state.wideRadiusKm,
+    scope: state.scope,
+    mode: state.mode
+  });
+});
+
+app.post('/api/home', (req, res) => {
+  const { lat, lng, altM, name, radiusKm, wideRadiusKm, scope, mode } = req.body || {};
+
+  if (Number.isFinite(Number(lat)) && Number.isFinite(Number(lng))) {
+    state.home = {
+      lat: Number(lat),
+      lng: Number(lng),
+      altM: Number.isFinite(Number(altM)) ? Number(altM) : state.home.altM,
+      name: typeof name === 'string' && name.trim() ? name.trim() : state.home.name
+    };
+    simulator.setHome(state.home);
+    simulator.seedFleet();
   }
 
-  const { type, district, q, lat, lng, radiusKm = '2', limit = '200' } = req.query;
-  let results = data.locations;
-
-  if (type) {
-    const types = String(type).split(',').map((t) => t.trim());
-    results = results.filter((loc) => types.includes(loc.type));
+  if (radiusKm != null) {
+    state.radiusKm = Math.max(10, Math.min(400, Number(radiusKm)));
+    simulator.setRadius(state.radiusKm);
   }
 
-  if (district) {
-    const districtLower = String(district).toLocaleLowerCase('tr');
-    results = results.filter((loc) => loc.district.toLocaleLowerCase('tr').includes(districtLower));
+  if (wideRadiusKm != null) {
+    state.wideRadiusKm = Math.max(100, Math.min(1500, Number(wideRadiusKm)));
+    simulator.setWideRadius(state.wideRadiusKm);
   }
 
-  if (q) {
-    const query = String(q).toLocaleLowerCase('tr');
-    results = results.filter((loc) => {
-      const haystack = [loc.district, loc.address, loc.terminalId, loc.type]
-        .filter(Boolean)
-        .join(' ')
-        .toLocaleLowerCase('tr');
-      return haystack.includes(query);
-    });
+  if (scope === 'near' || scope === 'wide' || scope === 'both') {
+    state.scope = scope;
   }
 
-  const userLat = lat ? Number(lat) : null;
-  const userLng = lng ? Number(lng) : null;
-  const maxRadius = Number(radiusKm);
-  const maxLimit = Math.min(Number(limit) || 200, 1000);
-
-  if (Number.isFinite(userLat) && Number.isFinite(userLng)) {
-    results = results
-      .map((loc) => ({
-        ...loc,
-        distanceKm: haversineKm(userLat, userLng, loc.lat, loc.lng)
-      }))
-      .filter((loc) => !Number.isFinite(maxRadius) || loc.distanceKm <= maxRadius)
-      .sort((a, b) => a.distanceKm - b.distanceKm);
+  if (mode === 'simulation' || mode === 'live') {
+    state.mode = mode;
   }
 
   res.json({
-    updatedAt: data.updatedAt,
-    source: data.source,
-    total: results.length,
-    summary: data.summary,
-    locations: results.slice(0, maxLimit)
+    home: state.home,
+    radiusKm: state.radiusKm,
+    wideRadiusKm: state.wideRadiusKm,
+    scope: state.scope,
+    mode: state.mode
   });
 });
 
-app.get('/api/meta', (_req, res) => {
-  const data = loadData();
-  if (!data) {
-    return res.status(503).json({ error: 'Veri yok' });
+app.get('/api/flights', async (req, res) => {
+  const mode = req.query.mode || state.mode;
+  const scope = req.query.scope || state.scope;
+  const homeRadiusKm = Number(req.query.radiusKm) || state.radiusKm;
+  const wideRadiusKm = Number(req.query.wideRadiusKm) || state.wideRadiusKm;
+  const category = req.query.category;
+  const queryRadius = scope === 'near' ? homeRadiusKm : wideRadiusKm;
+
+  try {
+    let flights;
+    let source = mode;
+
+    if (mode === 'live') {
+      try {
+        flights = await fetchOpenSkyFlights(state.home, queryRadius);
+        source = 'opensky';
+      } catch (err) {
+        flights = simulator.getSnapshot(queryRadius, homeRadiusKm);
+        source = 'simulation-fallback';
+        res.setHeader('X-SkyWatch-Fallback', err.message || 'opensky-error');
+      }
+    } else {
+      flights = simulator.getSnapshot(queryRadius, homeRadiusKm);
+      source = 'simulation';
+    }
+
+    flights = annotateFlights(flights, homeRadiusKm);
+
+    if (scope === 'near') {
+      flights = flights.filter((f) => f.zone === 'near');
+    } else if (scope === 'wide') {
+      // show all within wide radius (near + far)
+    }
+
+    if (category === 'plane' || category === 'helicopter') {
+      flights = flights.filter((f) => f.category === category);
+    }
+
+    const nearCount = flights.filter((f) => f.zone === 'near').length;
+    const farCount = flights.filter((f) => f.zone === 'far').length;
+
+    res.json({
+      home: state.home,
+      radiusKm: homeRadiusKm,
+      wideRadiusKm,
+      scope,
+      mode: source,
+      count: flights.length,
+      nearCount,
+      farCount,
+      updatedAt: new Date().toISOString(),
+      flights
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message || 'Uçuş verisi alınamadı' });
   }
-
-  const districts = [...new Set(data.locations.map((loc) => loc.district))].sort((a, b) =>
-    a.localeCompare(b, 'tr')
-  );
-  const types = [...new Set(data.locations.map((loc) => loc.type))].sort((a, b) =>
-    a.localeCompare(b, 'tr')
-  );
-
-  res.json({
-    updatedAt: data.updatedAt,
-    source: data.source,
-    total: data.total,
-    summary: data.summary,
-    districts,
-    types
-  });
 });
 
-const WEB_DIST = path.join(__dirname, '../web/dist');
-if (fs.existsSync(WEB_DIST)) {
-  app.use(express.static(WEB_DIST));
-  app.get('*', (_req, res) => {
-    res.sendFile(path.join(WEB_DIST, 'index.html'));
-  });
-}
+app.get('/api/flights/:id', async (req, res) => {
+  const flights = annotateFlights(
+    simulator.getSnapshot(state.wideRadiusKm, state.radiusKm),
+    state.radiusKm
+  );
+  const found = flights.find((f) => f.id === req.params.id || f.icao24 === req.params.id);
+  if (!found) {
+    return res.status(404).json({ error: 'Uçak bulunamadı' });
+  }
+  res.json(found);
+});
 
 app.listen(PORT, () => {
-  console.log(`API http://localhost:${PORT} üzerinde çalışıyor`);
+  console.log(`SkyWatch API http://localhost:${PORT}`);
+  console.log(
+    `Mod: ${state.mode} | Kapsam: ${state.scope} | Ev: ${state.home.lat}, ${state.home.lng}`
+  );
 });
