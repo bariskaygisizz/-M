@@ -1,0 +1,632 @@
+{
+  "updatedAt": "2026-07-21T20:12:55.647Z",
+  "stores": [
+    {
+      "id": "store-kadikoy-gunes",
+      "name": "Güneş Market",
+      "type": "market",
+      "district": "Kadıköy",
+      "address": "Moda Cad. No:42, Kadıköy",
+      "phone": "0216 555 0101",
+      "lat": 40.9848,
+      "lng": 29.0255,
+      "openHours": "07:00–23:00",
+      "deliveryMinutesBase": 18,
+      "rating": 4.7,
+      "ownerId": "seller-ayse",
+      "description": "Mahalle marketi. Günlük süt, ekmek ve temel ihtiyaç ürünleri.",
+      "subscriberCount": 128,
+      "verified": true
+    },
+    {
+      "id": "store-besiktas-sutcu",
+      "name": "Boğaz Sütçü",
+      "type": "sutcu",
+      "district": "Beşiktaş",
+      "address": "Barbaros Bulvarı No:18, Beşiktaş",
+      "phone": "0212 555 0202",
+      "lat": 41.0422,
+      "lng": 29.0067,
+      "openHours": "06:30–21:00",
+      "deliveryMinutesBase": 22,
+      "rating": 4.9,
+      "ownerId": "seller-mehmet",
+      "description": "Taze süt, yoğurt, peynir ve günlük süt ürünleri.",
+      "subscriberCount": 96,
+      "verified": true
+    },
+    {
+      "id": "store-sisli-express",
+      "name": "Şişli Express Bakkal",
+      "type": "bakkal",
+      "district": "Şişli",
+      "address": "Halaskargazi Cad. No:110, Şişli",
+      "phone": "0212 555 0303",
+      "lat": 41.0602,
+      "lng": 28.9878,
+      "openHours": "08:00–00:00",
+      "deliveryMinutesBase": 15,
+      "rating": 4.4,
+      "ownerId": "seller-can",
+      "description": "Gece açık bakkal. Acil ihtiyaçlar için hızlı teslimat.",
+      "subscriberCount": 74,
+      "verified": true
+    },
+    {
+      "id": "store-uskudar-yesil",
+      "name": "Yeşil Vadi Market",
+      "type": "market",
+      "district": "Üsküdar",
+      "address": "Çavuşdere Cad. No:7, Üsküdar",
+      "phone": "0216 555 0404",
+      "lat": 41.0255,
+      "lng": 29.0153,
+      "openHours": "07:30–22:30",
+      "deliveryMinutesBase": 25,
+      "rating": 4.6,
+      "ownerId": "seller-elif",
+      "description": "Geniş reyon, temizlik ve gıda ürünleri.",
+      "subscriberCount": 152,
+      "verified": true
+    },
+    {
+      "id": "store-fatih-mahalle",
+      "name": "Fatih Mahalle Marketi",
+      "type": "market",
+      "district": "Fatih",
+      "address": "Akşemsettin Mah. Fevzipaşa Cad. No:55",
+      "phone": "0212 555 0505",
+      "lat": 41.0186,
+      "lng": 28.9497,
+      "openHours": "07:00–22:00",
+      "deliveryMinutesBase": 20,
+      "rating": 4.3,
+      "ownerId": "seller-hasan",
+      "description": "Mahalle esnafı. Temel gıda ve içecek.",
+      "subscriberCount": 61,
+      "verified": false
+    },
+    {
+      "id": "store-bakirkoy-gunluk",
+      "name": "Günlük Süt Evi",
+      "type": "sutcu",
+      "district": "Bakırköy",
+      "address": "İstanbul Cad. No:88, Bakırköy",
+      "phone": "0212 555 0606",
+      "lat": 40.9819,
+      "lng": 28.8776,
+      "openHours": "06:00–20:00",
+      "deliveryMinutesBase": 28,
+      "rating": 4.8,
+      "ownerId": "seller-zeynep",
+      "description": "Çiftlik sütü, kaymak ve taze yoğurt.",
+      "subscriberCount": 83,
+      "verified": true
+    }
+  ],
+  "products": [
+    {
+      "id": "p-sut-1l",
+      "storeId": "store-kadikoy-gunes",
+      "name": "Tam Yağlı Süt 1L",
+      "category": "Süt Ürünleri",
+      "price": 42.9,
+      "stock": 24,
+      "unit": "adet",
+      "restockAt": null,
+      "imageHint": "sut"
+    },
+    {
+      "id": "p-ekmek",
+      "storeId": "store-kadikoy-gunes",
+      "name": "Somun Ekmek",
+      "category": "Fırın",
+      "price": 12.5,
+      "stock": 40,
+      "unit": "adet",
+      "restockAt": null,
+      "imageHint": "ekmek"
+    },
+    {
+      "id": "p-yumurta",
+      "storeId": "store-kadikoy-gunes",
+      "name": "Yumurta 10'lu",
+      "category": "Kahvaltılık",
+      "price": 75,
+      "stock": 8,
+      "unit": "kutu",
+      "restockAt": null,
+      "imageHint": "yumurta"
+    },
+    {
+      "id": "p-cay",
+      "storeId": "store-kadikoy-gunes",
+      "name": "Dökme Çay 500g",
+      "category": "İçecek",
+      "price": 189,
+      "stock": 0,
+      "unit": "paket",
+      "restockAt": "2026-07-22T10:00:00.000Z",
+      "imageHint": "cay"
+    },
+    {
+      "id": "p-bogaz-sut",
+      "storeId": "store-besiktas-sutcu",
+      "name": "Günlük Süt 2L",
+      "category": "Süt Ürünleri",
+      "price": 78,
+      "stock": 15,
+      "unit": "adet",
+      "restockAt": null,
+      "imageHint": "sut"
+    },
+    {
+      "id": "p-yogurt",
+      "storeId": "store-besiktas-sutcu",
+      "name": "Ev Yoğurdu 1kg",
+      "category": "Süt Ürünleri",
+      "price": 95,
+      "stock": 11,
+      "unit": "adet",
+      "restockAt": null,
+      "imageHint": "yogurt"
+    },
+    {
+      "id": "p-peynir",
+      "storeId": "store-besiktas-sutcu",
+      "name": "Beyaz Peynir 500g",
+      "category": "Süt Ürünleri",
+      "price": 165,
+      "stock": 0,
+      "unit": "adet",
+      "restockAt": "2026-07-23T08:00:00.000Z",
+      "imageHint": "peynir"
+    },
+    {
+      "id": "p-su",
+      "storeId": "store-sisli-express",
+      "name": "Su 5L",
+      "category": "İçecek",
+      "price": 55,
+      "stock": 30,
+      "unit": "adet",
+      "restockAt": null,
+      "imageHint": "su"
+    },
+    {
+      "id": "p-makarna",
+      "storeId": "store-sisli-express",
+      "name": "Makarna 500g",
+      "category": "Kuru Gıda",
+      "price": 28,
+      "stock": 50,
+      "unit": "paket",
+      "restockAt": null,
+      "imageHint": "makarna"
+    },
+    {
+      "id": "p-cikolata",
+      "storeId": "store-sisli-express",
+      "name": "Sütlü Çikolata",
+      "category": "Atıştırmalık",
+      "price": 35,
+      "stock": 3,
+      "unit": "adet",
+      "restockAt": null,
+      "imageHint": "cikolata"
+    },
+    {
+      "id": "p-detergent",
+      "storeId": "store-uskudar-yesil",
+      "name": "Çamaşır Deterjanı 4kg",
+      "category": "Temizlik",
+      "price": 249,
+      "stock": 12,
+      "unit": "adet",
+      "restockAt": null,
+      "imageHint": "temizlik"
+    },
+    {
+      "id": "p-pirinc",
+      "storeId": "store-uskudar-yesil",
+      "name": "Pirinç 2kg",
+      "category": "Kuru Gıda",
+      "price": 145,
+      "stock": 20,
+      "unit": "paket",
+      "restockAt": null,
+      "imageHint": "pirinc"
+    },
+    {
+      "id": "p-zeytinyagi",
+      "storeId": "store-uskudar-yesil",
+      "name": "Zeytinyağı 1L",
+      "category": "Yağ",
+      "price": 420,
+      "stock": 0,
+      "unit": "adet",
+      "restockAt": "2026-07-24T12:00:00.000Z",
+      "imageHint": "yag"
+    },
+    {
+      "id": "p-fatih-sut",
+      "storeId": "store-fatih-mahalle",
+      "name": "Süt 1L",
+      "category": "Süt Ürünleri",
+      "price": 39.9,
+      "stock": 18,
+      "unit": "adet",
+      "restockAt": null,
+      "imageHint": "sut"
+    },
+    {
+      "id": "p-fatih-ekmek",
+      "storeId": "store-fatih-mahalle",
+      "name": "Ekmek",
+      "category": "Fırın",
+      "price": 11,
+      "stock": 25,
+      "unit": "adet",
+      "restockAt": null,
+      "imageHint": "ekmek"
+    },
+    {
+      "id": "p-bakir-sut",
+      "storeId": "store-bakirkoy-gunluk",
+      "name": "Çiftlik Sütü 1L",
+      "category": "Süt Ürünleri",
+      "price": 55,
+      "stock": 9,
+      "unit": "adet",
+      "restockAt": null,
+      "imageHint": "sut"
+    },
+    {
+      "id": "p-kaymak",
+      "storeId": "store-bakirkoy-gunluk",
+      "name": "Kaymak 200g",
+      "category": "Süt Ürünleri",
+      "price": 120,
+      "stock": 4,
+      "unit": "adet",
+      "restockAt": null,
+      "imageHint": "kaymak"
+    }
+  ],
+  "sellers": [
+    {
+      "id": "seller-ayse",
+      "name": "Ayşe Demir",
+      "email": "ayse@gunesmarket.tr",
+      "phone": "0532 111 0101",
+      "storeId": "store-kadikoy-gunes",
+      "role": "seller",
+      "joinedAt": "2025-11-02T10:00:00.000Z",
+      "bio": "Kadıköy Moda’da 12 yıldır mahalle marketi işletiyorum."
+    },
+    {
+      "id": "seller-mehmet",
+      "name": "Mehmet Kaya",
+      "email": "mehmet@bogazsutcu.tr",
+      "phone": "0532 222 0202",
+      "storeId": "store-besiktas-sutcu",
+      "role": "seller",
+      "joinedAt": "2025-09-15T10:00:00.000Z",
+      "bio": "Aile sütçülüğü. Sabah sağım, öğlene rafta."
+    },
+    {
+      "id": "seller-can",
+      "name": "Can Öztürk",
+      "email": "can@sisliexpress.tr",
+      "phone": "0532 333 0303",
+      "storeId": "store-sisli-express",
+      "role": "seller",
+      "joinedAt": "2026-01-08T10:00:00.000Z",
+      "bio": "Gece açık bakkal. Acil ihtiyaçta hızlı çıkış."
+    },
+    {
+      "id": "seller-elif",
+      "name": "Elif Yıldız",
+      "email": "elif@yesilvadi.tr",
+      "phone": "0532 444 0404",
+      "storeId": "store-uskudar-yesil",
+      "role": "seller",
+      "joinedAt": "2025-08-20T10:00:00.000Z",
+      "bio": "Üsküdar’da geniş reyonlu mahalle marketi."
+    },
+    {
+      "id": "seller-hasan",
+      "name": "Hasan Çelik",
+      "email": "hasan@fatihmarket.tr",
+      "phone": "0532 555 0505",
+      "storeId": "store-fatih-mahalle",
+      "role": "seller",
+      "joinedAt": "2026-03-01T10:00:00.000Z",
+      "bio": "Fatih mahalle esnafı."
+    },
+    {
+      "id": "seller-zeynep",
+      "name": "Zeynep Arslan",
+      "email": "zeynep@gunluksutevi.tr",
+      "phone": "0532 666 0606",
+      "storeId": "store-bakirkoy-gunluk",
+      "role": "seller",
+      "joinedAt": "2025-12-12T10:00:00.000Z",
+      "bio": "Bakırköy’de günlük süt ve kaymak."
+    }
+  ],
+  "customers": [
+    {
+      "id": "cust-deniz",
+      "name": "Deniz Aydın",
+      "email": "deniz@ornek.com",
+      "phone": "0530 100 2001",
+      "role": "customer",
+      "district": "Kadıköy",
+      "lat": 40.988,
+      "lng": 29.028,
+      "subscribedStoreIds": [
+        "store-kadikoy-gunes",
+        "store-besiktas-sutcu"
+      ],
+      "joinedAt": "2026-02-10T12:00:00.000Z",
+      "preferences": [
+        "Süt Ürünleri",
+        "Fırın"
+      ],
+      "orderCount": 14,
+      "lastActiveAt": "2026-07-21T20:12:55.647Z"
+    },
+    {
+      "id": "cust-efe",
+      "name": "Efe Kara",
+      "email": "efe@ornek.com",
+      "phone": "0530 100 2002",
+      "role": "customer",
+      "district": "Beşiktaş",
+      "lat": 41.044,
+      "lng": 29.004,
+      "subscribedStoreIds": [
+        "store-besiktas-sutcu"
+      ],
+      "joinedAt": "2026-01-22T12:00:00.000Z",
+      "preferences": [
+        "Süt Ürünleri"
+      ],
+      "orderCount": 9,
+      "lastActiveAt": "2026-07-21T17:10:00.000Z"
+    },
+    {
+      "id": "cust-selin",
+      "name": "Selin Mutlu",
+      "email": "selin@ornek.com",
+      "phone": "0530 100 2003",
+      "role": "customer",
+      "district": "Şişli",
+      "lat": 41.058,
+      "lng": 28.99,
+      "subscribedStoreIds": [
+        "store-sisli-express",
+        "store-uskudar-yesil"
+      ],
+      "joinedAt": "2026-04-05T12:00:00.000Z",
+      "preferences": [
+        "İçecek",
+        "Atıştırmalık"
+      ],
+      "orderCount": 21,
+      "lastActiveAt": "2026-07-21T19:00:00.000Z"
+    },
+    {
+      "id": "cust-burak",
+      "name": "Burak Şen",
+      "email": "burak@ornek.com",
+      "phone": "0530 100 2004",
+      "role": "customer",
+      "district": "Üsküdar",
+      "lat": 41.027,
+      "lng": 29.018,
+      "subscribedStoreIds": [
+        "store-uskudar-yesil"
+      ],
+      "joinedAt": "2026-03-18T12:00:00.000Z",
+      "preferences": [
+        "Temizlik",
+        "Kuru Gıda"
+      ],
+      "orderCount": 7,
+      "lastActiveAt": "2026-07-20T21:00:00.000Z"
+    },
+    {
+      "id": "cust-melis",
+      "name": "Melis Güneş",
+      "email": "melis@ornek.com",
+      "phone": "0530 100 2005",
+      "role": "customer",
+      "district": "Fatih",
+      "lat": 41.02,
+      "lng": 28.952,
+      "subscribedStoreIds": [
+        "store-fatih-mahalle"
+      ],
+      "joinedAt": "2026-05-01T12:00:00.000Z",
+      "preferences": [
+        "Fırın",
+        "Süt Ürünleri"
+      ],
+      "orderCount": 5,
+      "lastActiveAt": "2026-07-19T16:00:00.000Z"
+    },
+    {
+      "id": "cust-onur",
+      "name": "Onur Akın",
+      "email": "onur@ornek.com",
+      "phone": "0530 100 2006",
+      "role": "customer",
+      "district": "Bakırköy",
+      "lat": 40.983,
+      "lng": 28.875,
+      "subscribedStoreIds": [
+        "store-bakirkoy-gunluk",
+        "store-sisli-express"
+      ],
+      "joinedAt": "2026-06-11T12:00:00.000Z",
+      "preferences": [
+        "Süt Ürünleri"
+      ],
+      "orderCount": 11,
+      "lastActiveAt": "2026-07-21T12:40:00.000Z"
+    }
+  ],
+  "orders": [
+    {
+      "id": "ord-1001",
+      "customerId": "cust-deniz",
+      "storeId": "store-kadikoy-gunes",
+      "items": [
+        {
+          "productId": "p-sut-1l",
+          "name": "Tam Yağlı Süt 1L",
+          "qty": 2,
+          "price": 42.9
+        }
+      ],
+      "status": "delivered",
+      "createdAt": "2026-07-20T10:15:00.000Z",
+      "etaMinutes": 18,
+      "deliveredAt": "2026-07-20T10:32:00.000Z",
+      "total": 85.8,
+      "customerLat": 40.988,
+      "customerLng": 29.028
+    },
+    {
+      "id": "ord-1002",
+      "customerId": "cust-selin",
+      "storeId": "store-sisli-express",
+      "items": [
+        {
+          "productId": "p-su",
+          "name": "Su 5L",
+          "qty": 1,
+          "price": 55
+        }
+      ],
+      "status": "on_the_way",
+      "createdAt": "2026-07-21T18:50:00.000Z",
+      "etaMinutes": 12,
+      "deliveredAt": null,
+      "total": 55,
+      "customerLat": 41.058,
+      "customerLng": 28.99
+    }
+  ],
+  "events": [
+    {
+      "id": "ev-1",
+      "type": "location_open",
+      "customerId": "cust-deniz",
+      "lat": 40.988,
+      "lng": 29.028,
+      "district": "Kadıköy",
+      "at": "2026-07-21T18:30:00.000Z"
+    },
+    {
+      "id": "ev-2",
+      "type": "search",
+      "customerId": "cust-deniz",
+      "query": "süt",
+      "lat": 40.988,
+      "lng": 29.028,
+      "district": "Kadıköy",
+      "at": "2026-07-21T18:31:00.000Z"
+    },
+    {
+      "id": "ev-3",
+      "type": "store_view",
+      "customerId": "cust-deniz",
+      "storeId": "store-kadikoy-gunes",
+      "lat": 40.988,
+      "lng": 29.028,
+      "district": "Kadıköy",
+      "at": "2026-07-21T18:32:00.000Z"
+    },
+    {
+      "id": "ev-4",
+      "type": "location_open",
+      "customerId": "cust-selin",
+      "lat": 41.058,
+      "lng": 28.99,
+      "district": "Şişli",
+      "at": "2026-07-21T19:00:00.000Z"
+    },
+    {
+      "id": "ev-5",
+      "type": "search",
+      "customerId": "cust-selin",
+      "query": "su",
+      "lat": 41.058,
+      "lng": 28.99,
+      "district": "Şişli",
+      "at": "2026-07-21T19:01:00.000Z"
+    },
+    {
+      "id": "ev-6",
+      "type": "order_placed",
+      "customerId": "cust-selin",
+      "storeId": "store-sisli-express",
+      "lat": 41.058,
+      "lng": 28.99,
+      "district": "Şişli",
+      "at": "2026-07-21T19:05:00.000Z"
+    },
+    {
+      "id": "ev-7",
+      "type": "location_open",
+      "customerId": "cust-efe",
+      "lat": 41.044,
+      "lng": 29.004,
+      "district": "Beşiktaş",
+      "at": "2026-07-21T17:10:00.000Z"
+    },
+    {
+      "id": "ev-8",
+      "type": "subscribe",
+      "customerId": "cust-onur",
+      "storeId": "store-bakirkoy-gunluk",
+      "lat": 40.983,
+      "lng": 28.875,
+      "district": "Bakırköy",
+      "at": "2026-07-18T11:00:00.000Z"
+    },
+    {
+      "id": "ev-9",
+      "type": "location_open",
+      "customerId": "cust-burak",
+      "lat": 41.027,
+      "lng": 29.018,
+      "district": "Üsküdar",
+      "at": "2026-07-20T21:00:00.000Z"
+    },
+    {
+      "id": "ev-10",
+      "type": "search",
+      "customerId": "cust-burak",
+      "query": "deterjan",
+      "lat": 41.027,
+      "lng": 29.018,
+      "district": "Üsküdar",
+      "at": "2026-07-20T21:02:00.000Z"
+    },
+    {
+      "id": "ev-mrv3bu1r-rzjwq",
+      "type": "location_open",
+      "customerId": "cust-deniz",
+      "storeId": null,
+      "query": null,
+      "lat": 40.988,
+      "lng": 29.028,
+      "district": "Kadıköy",
+      "at": "2026-07-21T20:12:55.647Z"
+    }
+  ]
+}

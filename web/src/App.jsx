@@ -1,202 +1,108 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import MapView from './components/MapView';
+import { useState } from 'react';
+import CustomerPanel from './components/CustomerPanel';
+import SellerPanel from './components/SellerPanel';
+import ProfilesPanel from './components/ProfilesPanel';
+import AnalyticsPanel from './components/AnalyticsPanel';
+import GuidePanel from './components/GuidePanel';
 
-const API_BASE = import.meta.env.VITE_API_URL || '/api';
+const NAV = [
+  { id: 'home', label: 'Ana sayfa' },
+  { id: 'customer', label: 'Müşteri' },
+  { id: 'seller', label: 'Satıcı' },
+  { id: 'profiles', label: 'Profiller' },
+  { id: 'analytics', label: 'Analitik' },
+  { id: 'guide', label: 'Kılavuz' }
+];
 
-const TYPE_COLORS = {
-  Biletmatik: '#2563eb',
-  'Biletmatik 4': '#7c3aed',
-  'Bayi / Dolum Noktası': '#16a34a',
-  'Dolum Merkezi': '#ea580c',
-  Diğer: '#6b7280'
-};
+function Landing({ onGo }) {
+  return (
+    <div className="landing">
+      <div className="landing-bg" aria-hidden="true" />
+      <section className="landing-hero">
+        <p className="brand-mark">YakınMarket</p>
+        <h1>Yakınındaki stok, dakikalar içinde.</h1>
+        <p className="lead">
+          Konumunu aç. En yakın market, bakkal ve sütçüde ne var gör. Sipariş kaç dakikada gelir,
+          stok ne zaman dolacak — haritada takip et.
+        </p>
+        <div className="cta-row">
+          <button type="button" className="btn btn-accent btn-lg" onClick={() => onGo('customer')}>
+            Müşteri olarak başla
+          </button>
+          <button type="button" className="btn btn-ghost btn-lg" onClick={() => onGo('seller')}>
+            Satıcı paneli
+          </button>
+          <button type="button" className="btn btn-ghost btn-lg" onClick={() => onGo('guide')}>
+            Kullanım kılavuzu
+          </button>
+        </div>
+      </section>
 
-function badgeClass(type) {
-  if (type === 'Biletmatik') return 'badge badge-biletmatik';
-  if (type === 'Biletmatik 4') return 'badge badge-biletmatik4';
-  if (type === 'Dolum Merkezi') return 'badge badge-dolum';
-  return 'badge badge-bayi';
+      <section className="landing-doors">
+        {[
+          {
+            id: 'customer',
+            title: 'Müşteri paneli',
+            text: 'Harita, yakın stok, ETA, sipariş takibi ve mağaza aboneliği.'
+          },
+          {
+            id: 'seller',
+            title: 'Satıcı paneli',
+            text: 'Stok güncelle, sipariş yönet, abonelerini ve işletme profilini gör.'
+          },
+          {
+            id: 'profiles',
+            title: 'Profiller',
+            text: 'Müşteri ve işletme kimlikleri — konum, tercih, abonelik.'
+          },
+          {
+            id: 'analytics',
+            title: 'Veri & aboneler',
+            text: 'Aboneler nerede? Konum, arama ve sipariş olaylarıyla yoğunluk haritası.'
+          }
+        ].map((door) => (
+          <button key={door.id} type="button" className="door" onClick={() => onGo(door.id)}>
+            <h3>{door.title}</h3>
+            <p>{door.text}</p>
+            <span>Aç →</span>
+          </button>
+        ))}
+      </section>
+    </div>
+  );
 }
 
 export default function App() {
-  const [meta, setMeta] = useState(null);
-  const [locations, setLocations] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [query, setQuery] = useState('');
-  const [district, setDistrict] = useState('');
-  const [selectedTypes, setSelectedTypes] = useState(['Biletmatik', 'Biletmatik 4']);
-  const [selectedId, setSelectedId] = useState(null);
-  const [userLocation, setUserLocation] = useState(null);
-  const [nearbyOnly, setNearbyOnly] = useState(false);
-
-  const fetchLocations = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const params = new URLSearchParams();
-      if (selectedTypes.length) params.set('type', selectedTypes.join(','));
-      if (district) params.set('district', district);
-      if (query) params.set('q', query);
-      if (nearbyOnly && userLocation) {
-        params.set('lat', String(userLocation.lat));
-        params.set('lng', String(userLocation.lng));
-        params.set('radiusKm', '3');
-        params.set('limit', '300');
-      } else {
-        params.set('limit', '500');
-      }
-
-      const [metaRes, locRes] = await Promise.all([
-        fetch(`${API_BASE}/meta`),
-        fetch(`${API_BASE}/locations?${params}`)
-      ]);
-
-      if (!metaRes.ok || !locRes.ok) {
-        throw new Error('API bağlantısı kurulamadı. Sunucunun çalıştığından emin olun.');
-      }
-
-      const metaJson = await metaRes.json();
-      const locJson = await locRes.json();
-      setMeta(metaJson);
-      setLocations(locJson.locations);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedTypes, district, query, nearbyOnly, userLocation]);
-
-  useEffect(() => {
-    fetchLocations();
-  }, [fetchLocations]);
-
-  const toggleType = (type) => {
-    setSelectedTypes((prev) =>
-      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
-    );
-  };
-
-  const handleLocateMe = () => {
-    if (!navigator.geolocation) {
-      setError('Tarayıcınız konum servisini desteklemiyor.');
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        setNearbyOnly(true);
-      },
-      () => setError('Konum izni verilmedi.')
-    );
-  };
-
-  const selectedLocation = useMemo(
-    () => locations.find((loc) => loc.id === selectedId) || null,
-    [locations, selectedId]
-  );
-
-  if (error && !meta) {
-    return <div className="error">{error}</div>;
-  }
+  const [view, setView] = useState('home');
 
   return (
-    <div className="app">
-      <aside className="sidebar">
-        <div className="sidebar-header">
-          <h1>İstanbul Kart Harita</h1>
-          <p>Biletmatik ve dolum noktalarını haritada keşfedin</p>
-        </div>
-
-        <div className="controls">
-          <div>
-            <label htmlFor="search">Ara</label>
-            <input
-              id="search"
-              placeholder="İlçe, adres veya terminal no..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-          </div>
-
-          <div>
-            <label htmlFor="district">İlçe</label>
-            <select id="district" value={district} onChange={(e) => setDistrict(e.target.value)}>
-              <option value="">Tüm ilçeler</option>
-              {(meta?.districts || []).map((d) => (
-                <option key={d} value={d}>
-                  {d}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label>Nokta tipi</label>
-            <div className="type-filters">
-              {(meta?.types || ['Biletmatik', 'Biletmatik 4', 'Bayi / Dolum Noktası', 'Dolum Merkezi']).map(
-                (type) => (
-                  <button
-                    key={type}
-                    type="button"
-                    className={`type-chip ${selectedTypes.includes(type) ? 'active' : ''}`}
-                    onClick={() => toggleType(type)}
-                  >
-                    {type}
-                  </button>
-                )
-              )}
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button type="button" className="btn btn-primary" style={{ flex: 1 }} onClick={fetchLocations}>
-              Filtrele
-            </button>
-            <button type="button" className="btn btn-secondary" onClick={handleLocateMe}>
-              Yakınımdakiler
-            </button>
-          </div>
-        </div>
-
-        <div className="stats">
-          {loading ? 'Yükleniyor...' : `${locations.length} nokta listeleniyor`}
-          {meta?.updatedAt && (
-            <div>Güncelleme: {new Date(meta.updatedAt).toLocaleDateString('tr-TR')}</div>
-          )}
-        </div>
-
-        <div className="location-list">
-          {locations.map((loc) => (
-            <article
-              key={loc.id}
-              className={`location-card ${selectedId === loc.id ? 'selected' : ''}`}
-              onClick={() => setSelectedId(loc.id)}
+    <div className="shell">
+      <header className="topnav">
+        <button type="button" className="brand" onClick={() => setView('home')}>
+          <span className="brand-dot" />
+          YakınMarket
+        </button>
+        <nav>
+          {NAV.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              className={view === item.id ? 'active' : ''}
+              onClick={() => setView(item.id)}
             >
-              <span className={badgeClass(loc.type)}>{loc.type}</span>
-              <h3>{loc.district}</h3>
-              <div className="meta">
-                {loc.address && <div>{loc.address}</div>}
-                {loc.terminalId && <div>Terminal: {loc.terminalId}</div>}
-                {loc.distanceKm != null && <div>{loc.distanceKm.toFixed(2)} km uzaklıkta</div>}
-              </div>
-            </article>
+              {item.label}
+            </button>
           ))}
-        </div>
+        </nav>
+      </header>
 
-        <div className="footer-note">
-          Veri kaynağı: İBB Açık Veri Portalı — BELBİM İstanbulkart Dolum Merkezi Bilgileri
-        </div>
-      </aside>
-
-      <main className="map-panel">
-        <MapView
-          locations={locations}
-          selectedLocation={selectedLocation}
-          userLocation={userLocation}
-          typeColors={TYPE_COLORS}
-          onSelect={setSelectedId}
-        />
+      <main className={`main-view view-${view}`}>
+        {view === 'home' && <Landing onGo={setView} />}
+        {view === 'customer' && <CustomerPanel />}
+        {view === 'seller' && <SellerPanel />}
+        {view === 'profiles' && <ProfilesPanel />}
+        {view === 'analytics' && <AnalyticsPanel />}
+        {view === 'guide' && <GuidePanel />}
       </main>
     </div>
   );

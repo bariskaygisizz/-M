@@ -1,14 +1,15 @@
 {
-  "name": "istanbul-kart-harita",
+  "name": "yakinmarket",
   "version": "1.0.0",
   "private": true,
-  "description": "İstanbul Kart dolum ve Biletmatik noktalarını haritada gösteren web ve mobil uygulama",
+  "description": "YakınMarket — konum tabanlı mahalle ticareti: stok, ETA, müşteri/satıcı panelleri",
   "scripts": {
     "sync-data": "node server/scripts/sync-data.js",
     "server": "node server/index.js",
-    "web": "npm run dev --prefix web",
+    "web": "npm run dev --prefix web -- --host 0.0.0.0 --port 5173",
     "web:build": "npm run build --prefix web",
     "mobile": "npm run start --prefix mobile",
-    "install:all": "npm install --prefix server && npm install --prefix web && npm install --prefix mobile"
+    "install:all": "npm install --prefix server && npm install --prefix web && npm install --prefix mobile",
+    "start": "npm run server"
   }
 }
