@@ -574,6 +574,16 @@ app.get('/api/market/analytics', (_req, res) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`YakınMarket API http://localhost:${PORT}`);
+// Üretim demosu: web build'i API ile aynı porttan sun
+const WEB_DIST = path.join(__dirname, '../web/dist');
+if (fs.existsSync(WEB_DIST)) {
+  app.use(express.static(WEB_DIST));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) return next();
+    res.sendFile(path.join(WEB_DIST, 'index.html'));
+  });
+}
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`YakınMarket http://localhost:${PORT}`);
 });
