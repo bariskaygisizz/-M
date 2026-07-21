@@ -1,82 +1,52 @@
-# İstanbul Kart Harita
+# YakınMarket
 
-İstanbul Kart **Biletmatik** ve **dolum noktalarını** haritada gösteren web ve mobil uygulama.
+Konum tabanlı mahalle ticareti: **market, bakkal, sütçü** stoklarını haritada gör; kaç dakikada gelir takip et; satıcı ve müşteri için ayrı paneller.
 
-Veriler [İBB Açık Veri Portalı](https://data.ibb.gov.tr/dataset/istanbulkart-dolum-merkezi-bilgileri) üzerinden BELBİM tarafından yayınlanan İstanbulkart dolum merkezi bilgilerinden alınır.
+Klasik e-ticaretten farkı: önce depo/kargo değil, **fiziksel mağaza + canlı stok + konum** gelir.
 
-## Özellikler
+## Paneller
 
-- Haritada Biletmatik, Biletmatik 4, bayi ve dolum merkezi noktaları
-- İlçe ve anahtar kelime ile arama
-- Nokta tipine göre filtreleme
-- Konumunuza göre yakındaki noktaları listeleme
-- Web (masaüstü/mobil tarayıcı) ve React Native (Expo) mobil uygulama
+| Panel | Ne işe yarar |
+|-------|----------------|
+| **Müşteri** | Konum aç, yakındaki mağaza/ürün/stok, ETA, sipariş, takip, abonelik |
+| **Satıcı** | Stok güncelle, sipariş durumu, aboneler, işletme profili |
+| **Profiller** | Müşteri ve işletme kimlikleri |
+| **Analitik** | Abone konumları, ilçe yoğunluğu, olay veri toplama |
+| **Kılavuz** | Adım adım ekran anlatımı |
 
-## Proje yapısı
-
-```
-├── data/locations.json      # Senkronize edilmiş konum verisi
-├── server/                  # Express API
-├── web/                     # React + Leaflet web uygulaması
-└── mobile/                  # Expo React Native mobil uygulama
-```
+Ayrıntılı anlatım: [KULLANIM_KILAVUZU.md](./KULLANIM_KILAVUZU.md)
 
 ## Kurulum
 
 ```bash
-# Bağımlılıkları yükle
 npm run install:all
-
-# İBB'den güncel veriyi çek
-npm run sync-data
-
-# API sunucusunu başlat (port 3001)
-npm run server
+npm run server   # API :3001
+npm run web      # Web :5173
 ```
 
-Ayrı bir terminalde web uygulaması:
+Tarayıcı: http://localhost:5173
 
-```bash
-npm run web
-```
-
-Tarayıcıda: http://localhost:5173
-
-## Mobil uygulama
-
-API sunucusu çalışırken:
-
-```bash
-cd mobile
-EXPO_PUBLIC_API_URL=http://<bilgisayar-ip>:3001/api npm start
-```
-
-Fiziksel cihazda test ederken `localhost` yerine bilgisayarınızın yerel IP adresini kullanın.
-
-## API uç noktaları
+## API (özet)
 
 | Endpoint | Açıklama |
 |----------|----------|
-| `GET /api/health` | Sağlık kontrolü |
-| `GET /api/meta` | İlçe listesi, tipler, özet |
-| `GET /api/locations` | Filtrelenmiş konum listesi |
+| `GET /api/market/stores` | Yakın mağazalar (`lat`,`lng`,`product`,…) |
+| `GET /api/market/products` | Ürün + stok + ETA |
+| `POST /api/market/orders` | Sipariş |
+| `PATCH /api/market/products/:id/stock` | Stok güncelle |
+| `POST /api/market/subscribe` | Mağaza aboneliği |
+| `POST /api/market/events` | Veri toplama olayı |
+| `GET /api/market/analytics` | Abone / olay özeti |
 
-### `/api/locations` parametreleri
+Örnek veri: `data/marketplace.json`
 
-- `type` — Virgülle ayrılmış tipler (ör. `Biletmatik,Biletmatik 4`)
-- `district` — İlçe adı
-- `q` — Arama metni
-- `lat`, `lng`, `radiusKm` — Yakındaki noktalar
-- `limit` — Maksimum sonuç (varsayılan 200)
+## Proje yapısı
 
-## Veri güncelleme
-
-```bash
-npm run sync-data
+```
+├── data/marketplace.json   # Mağaza, ürün, müşteri, satıcı, olaylar
+├── server/                 # Express API
+├── web/                    # React + Leaflet
+└── KULLANIM_KILAVUZU.md
 ```
 
-Script, İBB CKAN API üzerinden 2023–2025 veri setlerini birleştirir ve `data/locations.json` dosyasını oluşturur.
-
-## Lisans
-
-Konum verisi: İstanbul Büyükşehir Belediyesi Açık Veri Lisansı (BELBİM / İBB).
+İstanbul Kart harita API uçları (`/api/locations`) korunmuştur.
