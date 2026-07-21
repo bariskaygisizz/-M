@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-07-21T20:12:55.647Z",
+  "updatedAt": "2026-07-21T20:32:52.489Z",
   "stores": [
     {
       "id": "store-kadikoy-gunes",
@@ -627,6 +627,182 @@
       "lng": 29.028,
       "district": "Kadıköy",
       "at": "2026-07-21T20:12:55.647Z"
+    }
+  ],
+  "users": [
+    {
+      "id": "user-seller-ayse",
+      "role": "seller",
+      "name": "Ayşe Demir",
+      "email": "ayse@gunesmarket.tr",
+      "phone": "0532 111 0101",
+      "passwordHash": "b565be5583a5c08a:e644fac040b8759c037d50c539c05d45cd06261535807c54f78862b50dc6556a",
+      "storeId": "store-kadikoy-gunes",
+      "sellerProfileId": "seller-ayse",
+      "createdAt": "2025-11-02T10:00:00.000Z"
+    },
+    {
+      "id": "user-seller-mehmet",
+      "role": "seller",
+      "name": "Mehmet Kaya",
+      "email": "mehmet@bogazsutcu.tr",
+      "phone": "0532 222 0202",
+      "passwordHash": "b5c7f4f5800a2e18:fce3fa0855e8766e30c8a69a525695bf5c7d13aa9197f7d982ae913a9097a9ca",
+      "storeId": "store-besiktas-sutcu",
+      "sellerProfileId": "seller-mehmet",
+      "createdAt": "2025-09-15T10:00:00.000Z"
+    },
+    {
+      "id": "user-cust-deniz",
+      "role": "customer",
+      "name": "Deniz Aydın",
+      "email": "deniz@ornek.com",
+      "phone": "0530 100 2001",
+      "passwordHash": "66f55e483dbbe3da:b4ad40b0c488c5bf26675bf0c687db2c1ed525f2f39afee14d73de60be82b1c6",
+      "customerProfileId": "cust-deniz",
+      "createdAt": "2026-02-10T12:00:00.000Z"
+    },
+    {
+      "id": "user-cust-selin",
+      "role": "customer",
+      "name": "Selin Mutlu",
+      "email": "selin@ornek.com",
+      "phone": "0530 100 2003",
+      "passwordHash": "6d0c4c9eebbe94c9:1ed62b60bef8bc15b2eb3c9d772386ac321e7a615e52952e304b04927cb1815f",
+      "customerProfileId": "cust-selin",
+      "createdAt": "2026-04-05T12:00:00.000Z"
+    }
+  ],
+  "sessions": [
+    {
+      "id": "sess-mrv41hj5-9hp9p",
+      "token": "ecf198464abece10766b8cc41b37cb9821ec78d1c785491e",
+      "userId": "user-seller-ayse",
+      "role": "seller",
+      "createdAt": "2026-07-21T20:32:52.481Z",
+      "lastSeenAt": "2026-07-21T20:32:52.481Z",
+      "expiresAt": "2026-08-20T20:32:52.481Z"
+    },
+    {
+      "id": "sess-mrv41hhz-n9sdk",
+      "token": "de563be502562c546b6c38aa52364a61465b2ecd221acb91",
+      "userId": "user-cust-deniz",
+      "role": "customer",
+      "createdAt": "2026-07-21T20:32:52.439Z",
+      "lastSeenAt": "2026-07-21T20:32:52.439Z",
+      "expiresAt": "2026-08-20T20:32:52.439Z"
+    },
+    {
+      "id": "sess-mrv41hgv-rwp7m",
+      "token": "c341969107097099e6019febda0304f457764f18769e38ba",
+      "userId": "user-seller-ayse",
+      "role": "seller",
+      "createdAt": "2026-07-21T20:32:52.399Z",
+      "lastSeenAt": "2026-07-21T20:32:52.399Z",
+      "expiresAt": "2026-08-20T20:32:52.399Z"
+    }
+  ],
+  "posts": [
+    {
+      "id": "post-1",
+      "storeId": "store-kadikoy-gunes",
+      "authorUserId": "user-seller-ayse",
+      "type": "photo",
+      "caption": "Sabah taze ekmekler rafta 🍞 Moda’ya 15 dk.",
+      "mediaUrl": "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=800&q=80",
+      "isAd": false,
+      "likes": 42,
+      "createdAt": "2026-07-21T07:30:00.000Z"
+    },
+    {
+      "id": "post-2",
+      "storeId": "store-besiktas-sutcu",
+      "authorUserId": "user-seller-mehmet",
+      "type": "video",
+      "caption": "Günlük sağım — yoğurt ve süt bugün stokta.",
+      "mediaUrl": "https://images.unsplash.com/photo-1563636619-e9143da7973b?w=800&q=80",
+      "videoUrl": "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+      "isAd": false,
+      "likes": 88,
+      "createdAt": "2026-07-21T08:10:00.000Z"
+    },
+    {
+      "id": "post-3",
+      "storeId": "store-sisli-express",
+      "authorUserId": "user-seller-mehmet",
+      "type": "ad",
+      "caption": "REKLAM · Gece 00:00’a kadar açık — Su 5L kampanya!",
+      "mediaUrl": "https://images.unsplash.com/photo-1548832633-6f1f1b8c1c3d?w=800&q=80",
+      "isAd": true,
+      "likes": 15,
+      "createdAt": "2026-07-21T12:00:00.000Z"
+    },
+    {
+      "id": "post-4",
+      "storeId": "store-uskudar-yesil",
+      "authorUserId": "user-seller-ayse",
+      "type": "photo",
+      "caption": "Temizlik reyonu yenilendi. Deterjan stokta.",
+      "mediaUrl": "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&q=80",
+      "isAd": false,
+      "likes": 27,
+      "createdAt": "2026-07-20T16:40:00.000Z"
+    },
+    {
+      "id": "post-5",
+      "storeId": "store-bakirkoy-gunluk",
+      "authorUserId": "user-seller-mehmet",
+      "type": "ad",
+      "caption": "REKLAM · Kaymak + çiftlik sütü ikili paket",
+      "mediaUrl": "https://images.unsplash.com/photo-1628088062854-d1870b4553da?w=800&q=80",
+      "isAd": true,
+      "likes": 61,
+      "createdAt": "2026-07-21T09:00:00.000Z"
+    }
+  ],
+  "comments": [
+    {
+      "id": "cmt-1",
+      "postId": "post-1",
+      "userId": "user-cust-deniz",
+      "text": "Ekmek hâlâ sıcak mı?",
+      "createdAt": "2026-07-21T07:45:00.000Z"
+    },
+    {
+      "id": "cmt-2",
+      "postId": "post-2",
+      "userId": "user-cust-selin",
+      "text": "Yoğurt 1kg var mı?",
+      "createdAt": "2026-07-21T08:20:00.000Z"
+    }
+  ],
+  "messages": [
+    {
+      "id": "msg-1",
+      "storeId": "store-kadikoy-gunes",
+      "fromUserId": "user-cust-deniz",
+      "toUserId": "user-seller-ayse",
+      "text": "Süt 1L’den 2 tane ayırır mısınız?",
+      "createdAt": "2026-07-21T18:00:00.000Z"
+    },
+    {
+      "id": "msg-2",
+      "storeId": "store-kadikoy-gunes",
+      "fromUserId": "user-seller-ayse",
+      "toUserId": "user-cust-deniz",
+      "text": "Tabii, 20 dk içinde hazır.",
+      "createdAt": "2026-07-21T18:05:00.000Z"
+    }
+  ],
+  "chatLogs": [
+    {
+      "id": "chat-mrv41hjd-f2kw0",
+      "userId": "user-seller-ayse",
+      "role": "seller",
+      "storeId": "store-kadikoy-gunes",
+      "message": "ürün nasıl eklerim?",
+      "response": "Güneş Market için: YakınMarket asistanı stok, fiyat, reklam/post, sipariş, abone, teslimat süresi ve kayıt konularında yardımcı olur. Sorunu bu başlıklardan biriyle yazarsan adım adım öneri verebilirim.",
+      "createdAt": "2026-07-21T20:32:52.489Z"
     }
   ]
 }

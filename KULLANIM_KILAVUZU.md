@@ -88,3 +88,13 @@ Bu kılavuz uygulamadaki ekranları **adım adım** anlatır. Uygulama içinde d
 - [ ] Abone ol + sipariş ver
 - [ ] Satıcıda stok güncelle / siparişi ilerlet
 - [ ] Analitik’te olay ve haritayı kontrol et
+
+---
+
+## Yeni: Giriş / Kayıt kuralları
+
+1. **Misafir Keşif** — kayıt olmadan haritayı ve stokları gez.
+2. **Satıcı** — mutlaka kayıt olmalı (ürün, adet, fiyat, reklam yüklemek için).
+3. **Müşteri** — gezmek serbest; **yorum** veya **mesaj** için giriş/kayıt gerekir.
+4. **Keşfet** — Instagram tarzı foto / video / reklam.
+5. Satıcı panelinde **AI Chatbot** işletme yardımı verir (stok, fiyat, post, sipariş).
