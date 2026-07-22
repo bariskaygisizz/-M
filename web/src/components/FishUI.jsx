@@ -188,7 +188,8 @@ export function AuthPanel({ mode, onSubmit, onSwitch, error, busy }) {
     >
       <h2 className="section-title">{mode === "login" ? "Giriş Yap" : "Hesap Oluştur"}</h2>
       <p className="muted">
-        Abonelik ve tarama hakların hesabına bağlanır. Kim ödedi / kim ücretsiz net görülür.
+        Hesap oluşturarak tarama hakkınızı ve Premium’u cihazlar arasında
+        koruyabilirsiniz.
       </p>
       <label className="field">
         <span>Kullanıcı adı</span>
@@ -215,22 +216,18 @@ export function AuthPanel({ mode, onSubmit, onSwitch, error, busy }) {
   );
 }
 
-export function Paywall({ plans, user, onBuy, onClose, busy }) {
+export function Paywall({ plans, user, onClose }) {
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal panel" onClick={(e) => e.stopPropagation()}>
         <h2 className="section-title">Premium</h2>
         <p className="muted">
-          <strong>@{user?.username}</strong> — plan:{" "}
-          <span className="meta">{user?.plan}</span>
+          <strong>@{user?.username}</strong>
           {user?.plan === "free" && user?.scansLeft != null
-            ? ` · kalan tarama: ${user.scansLeft}`
-            : ""}
-        </p>
-        <p className="disclaimer" style={{ marginTop: 8 }}>
-          App Store kuralı (3.1.1): Dijital abonelik ödemesi yalnızca Apple App
-          Store / Google Play uygulama içi satın alma ile alınır. Bu web arayüzü
-          bilgilirme amaçlıdır; iOS Premium’u web’den satılmaz veya açılmaz.
+            ? ` · bugün kalan tarama: ${user.scansLeft}`
+            : user?.plan === "premium"
+              ? " · Premium aktif"
+              : ""}
         </p>
         <div className="plan-grid">
           {(plans || [])
@@ -248,22 +245,11 @@ export function Paywall({ plans, user, onBuy, onClose, busy }) {
             ))}
         </div>
         <p className="muted">
-          Abone olmak için iPhone’daki BalıkAtlas uygulamasını kullanın → Hesap →
-          App Store ile Abone Ol. Satın alımları geri yükleme ve hesap silme
-          uygulama içindedir.
+          Abonelik iPhone uygulamasından App Store ile alınır. Ödeme Apple
+          üzerinden güvenle tahsil edilir.
         </p>
-        {typeof onBuy === "function" && process.env.NODE_ENV !== "production" ? (
-          <button
-            type="button"
-            className="btn"
-            disabled={busy}
-            onClick={() => onBuy?.("premium_month")}
-          >
-            (Yalnızca geliştirici) Test premium
-          </button>
-        ) : null}
         <button type="button" className="btn btn-primary" onClick={onClose}>
-          Anladım
+          Tamam
         </button>
       </div>
     </div>

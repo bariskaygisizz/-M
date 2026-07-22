@@ -215,7 +215,6 @@ export default function AccountScreen() {
             <Text style={styles.planName}>{p.title}</Text>
             <Text style={styles.meta}>{p.periodLabel}</Text>
             <Text style={styles.sub}>{p.displayPriceHint}</Text>
-            <Text style={styles.productId}>{p.productId}</Text>
             {p.features.map((f) => (
               <Text key={f} style={styles.bullet}>
                 + {f}

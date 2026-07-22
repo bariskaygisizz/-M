@@ -145,7 +145,7 @@ export default function ScanScreen() {
             disabled={busy || !!preview}
           >
             <Text style={styles.ctaText}>
-              {busy ? "CLIP analiz ediyor…" : "Tara & Tanı"}
+              {busy ? "Analiz ediliyor…" : "Tara & Tanı"}
             </Text>
           </Pressable>
           <Pressable
@@ -185,8 +185,8 @@ export default function ScanScreen() {
         {result?.isFish !== false && candidates.length > 0 ? (
           <View style={styles.result}>
             <Text style={styles.conf}>
-              %{result.confidence} · {result.engine}
-              {result.needsConfirm ? " · onay gerekli" : ""}
+              Eşleşme %{result.confidence}
+              {result.needsConfirm ? " — doğru türü seç" : ""}
             </Text>
             <Text style={styles.notes}>{result.notes}</Text>
             <Text style={styles.blockTitle}>Doğru türü seç</Text>

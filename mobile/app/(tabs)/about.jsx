@@ -11,16 +11,14 @@ export default function AboutScreen() {
         <Text style={styles.brand}>BalıkAtlas</Text>
         <Text style={styles.version}>Sürüm 1.0.0</Text>
         <Text style={styles.body}>
-          BalıkAtlas; Türkiye denizleri ve tatlı sularında bilinen balıkların
-          türü, ortalama ağırlığı, yetiştiği bölge, kalori/protein bilgisi,
-          olası faydaları ve dikkat edilmesi gereken noktalarını tanıtan
-          çevrimdışı bir rehberdir.
+          Türkiye denizleri ve tatlı sularındaki balıkları tanıtan rehber:
+          bölge, sezon, kalori, eşleşmeler ve genel bilgilendirme.
         </Text>
 
         <View style={styles.box}>
-          <Text style={styles.boxTitle}>İçerik özeti</Text>
-          <Text style={styles.boxText}>{fishList.length} balık kaydı</Text>
-          <Text style={styles.boxText}>Çevrimdışı çalışır</Text>
+          <Text style={styles.boxTitle}>Özellikler</Text>
+          <Text style={styles.boxText}>{fishList.length}+ balık kaydı</Text>
+          <Text style={styles.boxText}>AI ile kamera / galeri tarama</Text>
           <Text style={styles.boxText}>Reklam ve takip yok</Text>
         </View>
 
@@ -29,13 +27,18 @@ export default function AboutScreen() {
 
         <Text style={styles.section}>Gizlilik</Text>
         <Text style={styles.body}>
-          Uygulama hesap, konum, kamera veya mikrofon kullanmaz. Favoriler
-          yalnızca cihazınızda (AsyncStorage) saklanır; sunucuya gönderilmez.
+          Hesap isteğe bağlıdır. Kamera yalnızca tarama başlattığınızda
+          kullanılır. Favoriler cihazınızda saklanabilir.
         </Text>
 
         <Link href="/privacy" asChild>
           <Pressable style={styles.linkBtn} accessibilityRole="link">
-            <Text style={styles.linkText}>Gizlilik Politikasını Aç</Text>
+            <Text style={styles.linkText}>Gizlilik Politikası</Text>
+          </Pressable>
+        </Link>
+        <Link href="/terms" asChild>
+          <Pressable style={[styles.linkBtn, { marginTop: 8 }]} accessibilityRole="link">
+            <Text style={styles.linkText}>Kullanım Koşulları</Text>
           </Pressable>
         </Link>
 
@@ -46,62 +49,52 @@ export default function AboutScreen() {
         >
           <Text style={styles.mail}>kaygisizbaris9@gmail.com</Text>
         </Pressable>
-
-        <Text style={styles.footer}>
-          © 2026 BalıkAtlas. Tüm hakları saklıdır.
-        </Text>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.bg },
+  safe: { flex: 1, backgroundColor: "#0a0a0a" },
   content: { padding: 16, paddingBottom: 40 },
   brand: {
     fontSize: 28,
     fontWeight: "800",
-    color: colors.brand,
+    color: "#2edcc8",
     marginBottom: 4,
   },
-  version: { color: colors.muted, marginBottom: 16, fontWeight: "600" },
+  version: { color: "#8a9aa0", marginBottom: 16, fontWeight: "600" },
   section: {
     fontSize: 17,
     fontWeight: "700",
-    color: colors.ink,
+    color: "#fff",
     marginTop: 18,
     marginBottom: 8,
   },
-  body: { color: colors.ink, fontSize: 15, lineHeight: 22 },
+  body: { color: "#e8eef0", fontSize: 15, lineHeight: 22 },
   box: {
-    backgroundColor: colors.surface,
+    backgroundColor: "rgba(18,22,24,0.9)",
     borderRadius: 16,
     padding: 14,
     borderWidth: 1,
-    borderColor: colors.line,
+    borderColor: "rgba(255,255,255,0.08)",
     marginTop: 16,
     gap: 4,
   },
-  boxTitle: { fontWeight: "700", color: colors.brand, marginBottom: 4 },
-  boxText: { color: colors.muted, fontSize: 14 },
+  boxTitle: { fontWeight: "700", color: "#2edcc8", marginBottom: 4 },
+  boxText: { color: "#8a9aa0", fontSize: 14 },
   linkBtn: {
     marginTop: 12,
-    backgroundColor: colors.brand,
+    backgroundColor: "#2edcc8",
     paddingVertical: 12,
     borderRadius: 12,
     alignItems: "center",
   },
-  linkText: { color: "#fff", fontWeight: "700" },
+  linkText: { color: "#041014", fontWeight: "700" },
   mail: {
-    color: colors.accent,
+    color: "#2edcc8",
     fontWeight: "700",
     fontSize: 15,
     marginTop: 4,
-  },
-  footer: {
-    marginTop: 28,
-    color: colors.muted,
-    fontSize: 12,
-    lineHeight: 18,
   },
 });

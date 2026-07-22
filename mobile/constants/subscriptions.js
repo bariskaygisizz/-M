@@ -9,12 +9,12 @@ export const IAP_PRODUCTS = {
     title: "Premium Aylık",
     periodLabel: "1 ay",
     // Fiyat Connect’te belirlenir; burada yalnızca gösterim şablonu
-    displayPriceHint: "App Store fiyatı geçerlidir",
+    displayPriceHint: "Fiyat App Store’da gösterilir",
     months: 1,
     features: [
       "Sınırsız AI balık tarama",
       "Reklamsız deneyim",
-      "Favori ve geçmiş senkronu",
+      "Favori senkronu",
     ],
   },
   yearly: {
@@ -22,12 +22,12 @@ export const IAP_PRODUCTS = {
     planKey: "premium_year",
     title: "Premium Yıllık",
     periodLabel: "1 yıl",
-    displayPriceHint: "App Store fiyatı geçerlidir",
+    displayPriceHint: "Fiyat App Store’da gösterilir",
     months: 12,
     features: [
       "Sınırsız AI balık tarama",
       "Reklamsız deneyim",
-      "Yıllık planda daha avantajlı",
+      "Yıllık avantajlı fiyat",
     ],
   },
 };

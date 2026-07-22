@@ -29,7 +29,6 @@ export const CLIP_LABELS = {
   cinekop: "a photo of a young bluefish (çinekop) small bluefish",
   akya: "a photo of a leerfish or leerfish steak (akya)",
   dil: "a photo of a Dover sole flatfish (dil balığı)",
-  laf: "a photo of a grouper fish (orfoz / laf)",
   sazan: "a photo of a common carp freshwater fish (sazan)",
   yayin: "a photo of a large catfish (yayın balığı)",
   karides: "a photo of shrimp or prawns (karides)",
@@ -256,7 +255,7 @@ export async function identifyFishFromBuffer(buffer, mime = "image/jpeg") {
       match: fish,
       alternatives: buildAlternatives(ranked, fish.id),
       notes: needsConfirm
-        ? "Birden fazla tür mümkün. Doğru olanı seçin."
+        ? "Birden fazla tür mümkün görünüyor. Doğru olanı seçin."
         : `En olası eşleşme: ${fish.name}`,
       ms: Date.now() - started,
     };
@@ -264,9 +263,7 @@ export async function identifyFishFromBuffer(buffer, mime = "image/jpeg") {
     console.error("identify error", err);
     return {
       ok: false,
-      error:
-        "AI modeli yüklenemedi veya analiz başarısız. Sunucuyu yeniden başlatıp tekrar deneyin.",
-      detail: String(err.message || err),
+      error: "Analiz tamamlanamadı. Lütfen tekrar deneyin.",
       ms: Date.now() - started,
     };
   } finally {

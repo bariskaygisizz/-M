@@ -38,16 +38,15 @@ export async function purchasePremium(planKey) {
 
   // Production yolu: native IAP sonucu beklenir
   throw new Error(
-    "App Store Connect abonelik ürünleri ve StoreKit bağlandıktan sonra satın alma etkinleşir. Şimdilik ‘Satın Alımları Geri Yükle’ veya sandbox test hesabı kullanın."
+    "Satın alma şu an tamamlanamadı. Lütfen daha sonra tekrar deneyin veya Satın Alımları Geri Yükle’yi kullanın."
   );
 }
 
 export async function restorePurchases() {
-  // Production: StoreKit restore → transactionId → sunucu
   if (typeof __DEV__ !== "undefined" && __DEV__) {
     return restoreAppleSubscription();
   }
   throw new Error(
-    "Geri yükleme, App Store satın alma kaydınızla yapılır. StoreKit bağlantısı sonrası etkinleşir."
+    "Geri yüklenecek satın alma bulunamadı. App Store hesabınızla giriş yaptığınızdan emin olun."
   );
 }

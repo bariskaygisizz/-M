@@ -166,7 +166,7 @@ export default function ScanView({ onOpenFish, user, setUser, onPaywall }) {
             onClick={onScan}
             disabled={!ready || busy}
           >
-            {busy ? "AI tanıyor (CLIP)…" : "Tara & Tanı"}
+            {busy ? "AI tanıyor…" : "Tara & Tanı"}
           </button>
           <button
             type="button"
@@ -200,7 +200,7 @@ export default function ScanView({ onOpenFish, user, setUser, onPaywall }) {
       <div className="panel">
         <h2 className="section-title">AI Sonuç</h2>
         {busy && (
-          <p className="loading">CLIP modeli analiz ediyor — birkaç saniye sürebilir</p>
+          <p className="loading">Analiz ediliyor — birkaç saniye sürebilir</p>
         )}
         {!busy && !result && (
           <p className="muted">
@@ -234,8 +234,8 @@ export default function ScanView({ onOpenFish, user, setUser, onPaywall }) {
         {result?.isFish !== false && candidates.length > 0 && (
           <div style={{ animation: "fadeUp 0.4s ease both" }}>
             <p className="confidence">
-              %{result.confidence} · {result.engine} · {result.ms}ms
-              {result.needsConfirm ? " · onay gerekli" : ""}
+              Eşleşme %{result.confidence}
+              {result.needsConfirm ? " — lütfen doğru türü seç" : ""}
             </p>
             <p className="muted">{result.notes}</p>
 

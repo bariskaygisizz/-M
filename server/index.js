@@ -82,7 +82,7 @@ app.get("/api/meta", (_req, res) => {
         price: "₺79,99",
         period: "month",
         months: 1,
-        features: ["Sınırsız AI tarama", "Reklamsız", "Öncelikli model"],
+        features: ["Sınırsız AI tarama", "Reklamsız deneyim"],
       },
       {
         id: "premium_year",
@@ -90,7 +90,7 @@ app.get("/api/meta", (_req, res) => {
         price: "₺499,99",
         period: "year",
         months: 12,
-        features: ["Sınırsız AI tarama", "Reklamsız", "2 ay hediye"],
+        features: ["Sınırsız AI tarama", "Reklamsız deneyim", "Yıllık avantajlı fiyat"],
       },
     ],
   });
@@ -265,6 +265,9 @@ app.post("/api/identify", authMiddleware, upload.single("image"), async (req, re
 
     res.json({
       ...result,
+      engine: undefined,
+      ms: undefined,
+      features: undefined,
       match: result.match
         ? { ...publicFish(result.match), image: `/fish/${result.match.id}.svg` }
         : null,

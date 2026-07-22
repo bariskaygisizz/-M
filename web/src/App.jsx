@@ -6,7 +6,6 @@ import {
   health,
   login,
   register,
-  activatePlan,
   clearSession,
   getCachedUser,
 } from "./api";
@@ -27,17 +26,15 @@ export default function App() {
   const [q, setQ] = useState("");
   const [region, setRegion] = useState("Tümü");
   const [selected, setSelected] = useState(null);
-  const [status, setStatus] = useState(null);
   const [user, setUser] = useState(getCachedUser());
   const [authMode, setAuthMode] = useState("login");
   const [authError, setAuthError] = useState("");
   const [authBusy, setAuthBusy] = useState(false);
   const [plans, setPlans] = useState([]);
   const [paywall, setPaywall] = useState(false);
-  const [buyBusy, setBuyBusy] = useState(false);
 
   useEffect(() => {
-    health().then(setStatus).catch(() => setStatus({ ok: false }));
+    health().catch(() => {});
     fetchMeta()
       .then((m) => setPlans(m.plans || []))
       .catch(() => {});
@@ -74,19 +71,6 @@ export default function App() {
       setAuthError(err.message || "Hata");
     } finally {
       setAuthBusy(false);
-    }
-  };
-
-  const onBuy = async (planId) => {
-    setBuyBusy(true);
-    try {
-      const json = await activatePlan(planId);
-      setUser(json.user);
-      setPaywall(false);
-    } catch (err) {
-      alert(err.message || "Satın alma başarısız");
-    } finally {
-      setBuyBusy(false);
     }
   };
 
@@ -143,12 +127,11 @@ export default function App() {
           <>
             <section className="hero">
               <OceanSim />
-              <div className="hero-kicker">AI · Hesap · Freemium</div>
+              <div className="hero-kicker">AI kamera · Balık atlası</div>
               <h1>BALIKATLAS</h1>
               <p>
-                Kamerayla tara, balığı tanı. Hangi deniz ve şehirde bol, neyle
-                gider / neyle kaçınılır, hangi ayda yenir, kalori ve organ organ
-                (beyin, göz, kalp…) olası faydalar — tek uygulamada.
+                Kamerayla tara, balığı tanı. Bölge, sezon, kalori, neyle gider ve
+                olası faydalar tek yerde.
               </p>
               <div className="cta-row">
                 <button
@@ -286,15 +269,13 @@ export default function App() {
         <Paywall
           plans={plans}
           user={user}
-          busy={buyBusy}
-          onBuy={onBuy}
           onClose={() => setPaywall(false)}
         />
       )}
 
       <footer className="footer">
-        API {status?.ok ? "online" : "offline"}
-        {user ? ` · @${user.username} (${user.plan})` : " · misafir"} · Freemium
+        © BalıkAtlas
+        {user ? ` · @${user.username}` : ""}
       </footer>
     </div>
   );
