@@ -1,5 +1,6 @@
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
+import { Stack } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import { colors } from "../constants/theme";
 
 export default function RootLayout() {
   return (
@@ -7,12 +8,21 @@ export default function RootLayout() {
       <StatusBar style="light" />
       <Stack
         screenOptions={{
-          headerStyle: { backgroundColor: '#e30a17' },
-          headerTintColor: '#fff',
-          headerTitleStyle: { fontWeight: '700' }
+          headerStyle: { backgroundColor: colors.brand },
+          headerTintColor: "#fff",
+          headerTitleStyle: { fontWeight: "700" },
+          contentStyle: { backgroundColor: colors.bg },
         }}
       >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="fish/[id]"
+          options={{ title: "Balık Detayı", headerBackTitle: "Geri" }}
+        />
+        <Stack.Screen
+          name="privacy"
+          options={{ title: "Gizlilik Politikası", presentation: "modal" }}
+        />
       </Stack>
     </>
   );

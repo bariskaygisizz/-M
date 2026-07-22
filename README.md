@@ -1,82 +1,38 @@
-# İstanbul Kart Harita
+# BalıkAtlas
 
-İstanbul Kart **Biletmatik** ve **dolum noktalarını** haritada gösteren web ve mobil uygulama.
-
-Veriler [İBB Açık Veri Portalı](https://data.ibb.gov.tr/dataset/istanbulkart-dolum-merkezi-bilgileri) üzerinden BELBİM tarafından yayınlanan İstanbulkart dolum merkezi bilgilerinden alınır.
+istanbulasim.com tarzı **modern koyu arayüz** + **backend API** + **kamera ile AI balık tanıma**.
 
 ## Özellikler
 
-- Haritada Biletmatik, Biletmatik 4, bayi ve dolum merkezi noktaları
-- İlçe ve anahtar kelime ile arama
-- Nokta tipine göre filtreleme
-- Konumunuza göre yakındaki noktaları listeleme
-- Web (masaüstü/mobil tarayıcı) ve React Native (Expo) mobil uygulama
+- Kamerayla / galeriden balık tara → AI tür tahmini
+- Tür, ağırlık, bölge, kalori, fayda ve zararlar
+- Web (Vite React) + Express API + Expo mobil
+- Yerel görüntü analizi (renk/şekil). `OPENAI_API_KEY` varsa vision modeli de kullanılır
 
-## Proje yapısı
-
-```
-├── data/locations.json      # Senkronize edilmiş konum verisi
-├── server/                  # Express API
-├── web/                     # React + Leaflet web uygulaması
-└── mobile/                  # Expo React Native mobil uygulama
-```
-
-## Kurulum
+## Çalıştırma
 
 ```bash
-# Bağımlılıkları yükle
 npm run install:all
-
-# İBB'den güncel veriyi çek
-npm run sync-data
-
-# API sunucusunu başlat (port 3001)
-npm run server
+npm run server   # http://localhost:3001
+npm run web      # http://localhost:5173
 ```
 
-Ayrı bir terminalde web uygulaması:
-
-```bash
-npm run web
-```
-
-Tarayıcıda: http://localhost:5173
-
-## Mobil uygulama
-
-API sunucusu çalışırken:
+Mobil:
 
 ```bash
 cd mobile
-EXPO_PUBLIC_API_URL=http://<bilgisayar-ip>:3001/api npm start
+EXPO_PUBLIC_API_URL=http://<bilgisayar-ip>:3001 npm start
 ```
 
-Fiziksel cihazda test ederken `localhost` yerine bilgisayarınızın yerel IP adresini kullanın.
-
-## API uç noktaları
+## API
 
 | Endpoint | Açıklama |
 |----------|----------|
-| `GET /api/health` | Sağlık kontrolü |
-| `GET /api/meta` | İlçe listesi, tipler, özet |
-| `GET /api/locations` | Filtrelenmiş konum listesi |
+| `GET /api/health` | Sağlık |
+| `GET /api/fish` | Liste (`q`, `region`) |
+| `GET /api/fish/:id` | Detay |
+| `POST /api/identify` | `multipart image` veya `imageBase64` |
 
-### `/api/locations` parametreleri
+## App Store
 
-- `type` — Virgülle ayrılmış tipler (ör. `Biletmatik,Biletmatik 4`)
-- `district` — İlçe adı
-- `q` — Arama metni
-- `lat`, `lng`, `radiusKm` — Yakındaki noktalar
-- `limit` — Maksimum sonuç (varsayılan 200)
-
-## Veri güncelleme
-
-```bash
-npm run sync-data
-```
-
-Script, İBB CKAN API üzerinden 2023–2025 veri setlerini birleştirir ve `data/locations.json` dosyasını oluşturur.
-
-## Lisans
-
-Konum verisi: İstanbul Büyükşehir Belediyesi Açık Veri Lisansı (BELBİM / İBB).
+`mobile/STORE_LISTING.md` — kamera izni metinleri `app.json` içinde.
