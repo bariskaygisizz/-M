@@ -23,6 +23,10 @@ export default function RootLayout() {
           name="privacy"
           options={{ title: "Gizlilik Politikası", presentation: "modal" }}
         />
+        <Stack.Screen
+          name="terms"
+          options={{ title: "Kullanım Koşulları", presentation: "modal" }}
+        />
       </Stack>
     </>
   );

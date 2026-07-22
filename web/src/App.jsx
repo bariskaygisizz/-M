@@ -146,8 +146,9 @@ export default function App() {
               <div className="hero-kicker">AI · Hesap · Freemium</div>
               <h1>BALIKATLAS</h1>
               <p>
-                Kamerayla tara, balığı tanı. Hesabınla ücretsiz veya Premium;
-                kim abone net. Canlı okyanus simülasyonuyla modern rehber.
+                Kamerayla tara, balığı tanı. Hangi deniz ve şehirde bol, neyle
+                gider / neyle kaçınılır, hangi ayda yenir, kalori ve organ organ
+                (beyin, göz, kalp…) olası faydalar — tek uygulamada.
               </p>
               <div className="cta-row">
                 <button

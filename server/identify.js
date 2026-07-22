@@ -27,6 +27,13 @@ export const CLIP_LABELS = {
   barbunya: "a photo of a red mullet fish (barbunya) reddish body",
   mercan: "a photo of a common pandora fish (mercan) pinkish",
   cinekop: "a photo of a young bluefish (çinekop) small bluefish",
+  akya: "a photo of a leerfish or leerfish steak (akya)",
+  dil: "a photo of a Dover sole flatfish (dil balığı)",
+  laf: "a photo of a grouper fish (orfoz / laf)",
+  sazan: "a photo of a common carp freshwater fish (sazan)",
+  yayin: "a photo of a large catfish (yayın balığı)",
+  karides: "a photo of shrimp or prawns (karides)",
+  kalamar: "a photo of squid or calamari (kalamar)",
 };
 
 const NOT_FISH = "a photo of something that is not a fish (plate, hand, table, phone)";

@@ -113,18 +113,55 @@ export async function identifyImage(uri) {
   return json;
 }
 
-export async function activatePlan(plan) {
+export async function activateAppleSubscription({
+  plan,
+  productId,
+  transactionId,
+  source = "appstore",
+}) {
   const res = await fetch(`${base()}/api/subscription/activate`, {
     method: "POST",
     headers: await authHeaders({ "Content-Type": "application/json" }),
-    body: JSON.stringify({
-      plan,
-      source: "dev",
-      transactionId: `dev_${Date.now()}`,
-    }),
+    body: JSON.stringify({ plan, productId, transactionId, source }),
   });
   const json = await res.json();
   if (!res.ok || !json.ok) throw new Error(json.error || "Abonelik başarısız");
   await setSession(await getToken(), json.user);
+  return json;
+}
+
+export async function restoreAppleSubscription(transactions = []) {
+  const res = await fetch(`${base()}/api/subscription/restore`, {
+    method: "POST",
+    headers: await authHeaders({ "Content-Type": "application/json" }),
+    body: JSON.stringify({ transactions }),
+  });
+  const json = await res.json();
+  if (!res.ok || !json.ok) throw new Error(json.error || "Geri yükleme başarısız");
+  if (json.user) await setSession(await getToken(), json.user);
+  return json;
+}
+
+/** @deprecated App Store 3.1.1 — doğrudan çağırma; IAP kullan */
+export async function activatePlan(plan) {
+  return activateAppleSubscription({
+    plan,
+    productId:
+      plan === "premium_year"
+        ? "com.bariskaygisiz.balikatlas.premium.yearly"
+        : "com.bariskaygisiz.balikatlas.premium.monthly",
+    transactionId: `sandbox_dev_${Date.now()}`,
+    source: "dev",
+  });
+}
+
+export async function deleteAccount() {
+  const res = await fetch(`${base()}/api/account/delete`, {
+    method: "POST",
+    headers: await authHeaders({ "Content-Type": "application/json" }),
+  });
+  const json = await res.json();
+  if (!res.ok || !json.ok) throw new Error(json.error || "Silme başarısız");
+  await clearSession();
   return json;
 }

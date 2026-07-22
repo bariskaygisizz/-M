@@ -44,6 +44,16 @@ export function StatGrid({ fish }) {
 
 export function FishDetail({ fish, onBack }) {
   if (!fish) return null;
+  const organLabels = {
+    brain: "Beyin",
+    eye: "Göz",
+    heart: "Kalp",
+    bone: "Kemik / eklem",
+    skin: "Cilt",
+    immune: "Bağışıklık",
+    thyroid: "Tiroid",
+    muscle: "Kas",
+  };
   return (
     <div>
       <button type="button" className="btn" onClick={onBack}>
@@ -72,38 +82,69 @@ export function FishDetail({ fish, onBack }) {
       </div>
 
       <div className="panel" style={{ marginBottom: "1rem" }}>
-        <h3 className="section-title">Kimlik</h3>
+        <h3 className="section-title">Kimlik & bölge</h3>
         <div className="stat-grid">
           <div className="stat">
             <div className="label">Ağırlık</div>
-            <div className="value" style={{ fontSize: "1rem" }}>
-              {fish.avgWeight}
-            </div>
+            <div className="value" style={{ fontSize: "1rem" }}>{fish.avgWeight}</div>
           </div>
           <div className="stat">
             <div className="label">Boy</div>
-            <div className="value" style={{ fontSize: "1rem" }}>
-              {fish.avgLength}
+            <div className="value" style={{ fontSize: "1rem" }}>{fish.avgLength}</div>
+          </div>
+          <div className="stat">
+            <div className="label">Deniz / su</div>
+            <div className="value" style={{ fontSize: "0.9rem" }}>
+              {(fish.seas || fish.regions || []).join(", ")}
             </div>
           </div>
           <div className="stat">
-            <div className="label">Bölge</div>
-            <div className="value" style={{ fontSize: "0.95rem" }}>
-              {fish.regions.join(", ")}
-            </div>
-          </div>
-          <div className="stat">
-            <div className="label">Lezzet</div>
-            <div className="value" style={{ fontSize: "0.95rem" }}>
-              {fish.taste}
+            <div className="label">En iyi zaman</div>
+            <div className="value" style={{ fontSize: "0.9rem" }}>
+              {fish.bestMonths || fish.season}
             </div>
           </div>
         </div>
+        {fish.cities?.length > 0 && (
+          <p className="meta" style={{ marginTop: 12 }}>
+            Şehir / bolluk: {fish.cities.join(" · ")}
+          </p>
+        )}
+        {fish.abundance && <p className="muted">{fish.abundance}</p>}
       </div>
 
       <div className="panel" style={{ marginBottom: "1rem" }}>
         <h3 className="section-title">Besin (100 g)</h3>
         <StatGrid fish={fish} />
+      </div>
+
+      <div className="panel" style={{ marginBottom: "1rem" }}>
+        <h3 className="section-title">Ne ile gider?</h3>
+        <div className="chips">
+          {(fish.pairsWith || []).map((x) => (
+            <span key={x} className="chip active">{x}</span>
+          ))}
+        </div>
+        <h3 className="section-title" style={{ marginTop: 16 }}>Ne ile kaçınılır?</h3>
+        <div className="chips">
+          {(fish.avoidWith || []).map((x) => (
+            <span key={x} className="chip">{x}</span>
+          ))}
+        </div>
+      </div>
+
+      <div className="panel" style={{ marginBottom: "1rem" }}>
+        <h3 className="section-title">Organ / sistem faydaları</h3>
+        <div className="stat-grid">
+          {Object.entries(fish.organs || {}).map(([key, note]) => (
+            <div className="stat" key={key}>
+              <div className="label">{organLabels[key] || key}</div>
+              <div className="muted" style={{ fontSize: "0.85rem", marginTop: 4, lineHeight: 1.4 }}>
+                {note}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="panel" style={{ marginBottom: "1rem" }}>
@@ -178,13 +219,18 @@ export function Paywall({ plans, user, onBuy, onClose, busy }) {
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal panel" onClick={(e) => e.stopPropagation()}>
-        <h2 className="section-title">Premium Abonelik</h2>
+        <h2 className="section-title">Premium</h2>
         <p className="muted">
-          Merhaba <strong>{user?.username}</strong> — planın:{" "}
+          <strong>@{user?.username}</strong> — plan:{" "}
           <span className="meta">{user?.plan}</span>
           {user?.plan === "free" && user?.scansLeft != null
             ? ` · kalan tarama: ${user.scansLeft}`
             : ""}
+        </p>
+        <p className="disclaimer" style={{ marginTop: 8 }}>
+          App Store kuralı (3.1.1): Dijital abonelik ödemesi yalnızca Apple App
+          Store / Google Play uygulama içi satın alma ile alınır. Bu web arayüzü
+          bilgilirme amaçlıdır; iOS Premium’u web’den satılmaz veya açılmaz.
         </p>
         <div className="plan-grid">
           {(plans || [])
@@ -198,23 +244,26 @@ export function Paywall({ plans, user, onBuy, onClose, busy }) {
                     <li key={f}>{f}</li>
                   ))}
                 </ul>
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  disabled={busy || user?.plan === "premium"}
-                  onClick={() => onBuy(p.id)}
-                >
-                  {user?.plan === "premium" ? "Aktif" : "Abone Ol"}
-                </button>
               </div>
             ))}
         </div>
-        <p className="disclaimer">
-          App Store’da gerçek ödeme StoreKit / RevenueCat ile alınır. Bu sürümde
-          test aboneliği hesabına işlenir; kim ödedi sunucuda kullanıcı adına bağlıdır.
+        <p className="muted">
+          Abone olmak için iPhone’daki BalıkAtlas uygulamasını kullanın → Hesap →
+          App Store ile Abone Ol. Satın alımları geri yükleme ve hesap silme
+          uygulama içindedir.
         </p>
-        <button type="button" className="btn" onClick={onClose}>
-          Kapat
+        {typeof onBuy === "function" && process.env.NODE_ENV !== "production" ? (
+          <button
+            type="button"
+            className="btn"
+            disabled={busy}
+            onClick={() => onBuy?.("premium_month")}
+          >
+            (Yalnızca geliştirici) Test premium
+          </button>
+        ) : null}
+        <button type="button" className="btn btn-primary" onClick={onClose}>
+          Anladım
         </button>
       </div>
     </div>

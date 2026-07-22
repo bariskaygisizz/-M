@@ -1,7 +1,8 @@
 {
   "name": "balikatlas",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "private": true,
+  "type": "module",
   "description": "BalıkAtlas — AI kamera ile balık tanıma, frontend + backend",
   "scripts": {
     "server": "npm run start --prefix server",

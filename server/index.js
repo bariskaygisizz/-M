@@ -22,7 +22,9 @@ import {
   publicUser,
   FREE_DAILY_SCANS,
   findUserById,
+  deleteUser,
 } from "./users.js";
+import { IAP_PRODUCTS_SERVER } from "./iap-products.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const webDist = path.join(__dirname, "../web/dist");
@@ -56,6 +58,16 @@ app.get("/api/meta", (_req, res) => {
     regions: REGIONS,
     count: fishList.length,
     brand: "BalıkAtlas",
+    organs: [
+      { id: "brain", label: "Beyin" },
+      { id: "eye", label: "Göz" },
+      { id: "heart", label: "Kalp" },
+      { id: "bone", label: "Kemik" },
+      { id: "skin", label: "Cilt" },
+      { id: "immune", label: "Bağışıklık" },
+      { id: "thyroid", label: "Tiroid" },
+      { id: "muscle", label: "Kas" },
+    ],
     plans: [
       {
         id: "free",
@@ -101,18 +113,43 @@ app.get("/api/me", authMiddleware, (req, res) => {
 });
 
 app.post("/api/subscription/activate", authMiddleware, (req, res) => {
+  const productId = String(req.body?.productId || "");
   const plan = String(req.body?.plan || "premium_month");
-  const months = plan === "premium_year" ? 12 : Number(req.body?.months) || 1;
-  // Production: Apple App Store Server API ile receipt doğrula
-  // Şimdilik giriş yapmış kullanıcı için abonelik kaydı (App Store IAP sonrası çağrılır)
-  const source = req.body?.source || "appstore";
-  const transactionId = req.body?.transactionId || null;
+  const source = String(req.body?.source || "appstore");
+  const transactionId = req.body?.transactionId
+    ? String(req.body.transactionId)
+    : null;
 
-  // Güvenlik: gerçek yayında sadece doğrulanmış Apple receipt kabul edilmeli
-  const allowDev = process.env.ALLOW_DEV_IAP !== "0";
-  if (!allowDev && source === "dev") {
-    return res.status(403).json({ ok: false, error: "Dev satın alma kapalı." });
+  // Guideline 3.1.1 — Production'da Apple dışı ödeme ile premium AÇILMAZ
+  const allowDev =
+    process.env.ALLOW_DEV_IAP === "1" || process.env.NODE_ENV === "development";
+
+  if (source === "dev") {
+    if (!allowDev) {
+      return res.status(403).json({
+        ok: false,
+        error:
+          "Geliştirici satın alma kapalı. App Store / StoreKit üzerinden satın alın.",
+      });
+    }
+  } else {
+    // appstore / play: transactionId zorunlu (gerçek doğrulama EAS sonrası eklenir)
+    if (!transactionId || transactionId.length < 8) {
+      return res.status(400).json({
+        ok: false,
+        error: "Geçerli mağaza işlem numarası (transaction) gerekli.",
+      });
+    }
+    if (productId && !IAP_PRODUCTS_SERVER[productId]) {
+      return res.status(400).json({
+        ok: false,
+        error: "Bilinmeyen App Store ürün kimliği.",
+      });
+    }
   }
+
+  const mapped = productId ? IAP_PRODUCTS_SERVER[productId] : null;
+  const months = mapped?.months || (plan === "premium_year" ? 12 : 1);
 
   const result = activatePremium(req.user.id, {
     months,
@@ -120,6 +157,52 @@ app.post("/api/subscription/activate", authMiddleware, (req, res) => {
     transactionId,
   });
   res.json(result);
+});
+
+app.post("/api/subscription/restore", authMiddleware, (req, res) => {
+  // İleride: Apple transactions dizisi doğrulanır
+  const transactions = Array.isArray(req.body?.transactions)
+    ? req.body.transactions
+    : [];
+  if (!transactions.length) {
+    return res.status(400).json({
+      ok: false,
+      error: "Geri yüklenecek App Store satın alma bulunamadı.",
+    });
+  }
+  // Minimal güvenli yol: en uzun süreli geçerli ürünü işle
+  let bestMonths = 0;
+  let bestTx = null;
+  for (const tx of transactions) {
+    const meta = IAP_PRODUCTS_SERVER[tx.productId];
+    if (!meta || !tx.transactionId) continue;
+    if (meta.months > bestMonths) {
+      bestMonths = meta.months;
+      bestTx = tx;
+    }
+  }
+  if (!bestTx) {
+    return res.status(404).json({
+      ok: false,
+      error: "Hesaba bağlanacak geçerli abonelik yok.",
+    });
+  }
+  const result = activatePremium(req.user.id, {
+    months: bestMonths,
+    source: "appstore_restore",
+    transactionId: bestTx.transactionId,
+  });
+  res.json(result);
+});
+
+app.post("/api/account/delete", authMiddleware, (req, res) => {
+  // Guideline 5.1.1(v) — hesap silme
+  const result = deleteUser(req.user.id);
+  if (!result.ok) return res.status(400).json(result);
+  res.json({
+    ok: true,
+    message: "Hesabınız ve ilişkili veriler silindi.",
+  });
 });
 
 app.post("/api/subscription/cancel", authMiddleware, (req, res) => {

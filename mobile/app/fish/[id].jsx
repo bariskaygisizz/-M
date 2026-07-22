@@ -14,6 +14,17 @@ import StatGrid from "../../components/StatGrid";
 import BulletSection from "../../components/BulletSection";
 import { colors, DISCLAIMER } from "../../constants/theme";
 
+const ORGAN_LABELS = {
+  brain: "Beyin",
+  eye: "Göz",
+  heart: "Kalp",
+  bone: "Kemik / eklem",
+  skin: "Cilt",
+  immune: "Bağışıklık",
+  thyroid: "Tiroid",
+  muscle: "Kas",
+};
+
 export default function FishDetailScreen() {
   const { id } = useLocalSearchParams();
   const navigation = useNavigation();
@@ -64,7 +75,7 @@ export default function FishDetailScreen() {
 
   const onShare = async () => {
     await Share.share({
-      message: `${fish.name} (${fish.scientific}) — ${fish.calories} kcal/100g · ${fish.regions.join(", ")}. BalıkAtlas`,
+      message: `${fish.name} — ${fish.calories} kcal/100g · ${(fish.seas || fish.regions).join(", ")}. BalıkAtlas`,
     });
   };
 
@@ -78,19 +89,32 @@ export default function FishDetailScreen() {
         <Fact label="Ortalama boy" value={fish.avgLength} />
         <Fact label="Tür" value={fish.type} />
         <Fact label="Sezon" value={fish.season} />
+        <Fact label="En iyi zaman" value={fish.bestMonths || fish.season} />
         <Fact label="Lezzet" value={fish.taste} />
-        <Fact label="Bölgeler" value={fish.regions.join(", ")} />
+        <Fact label="Deniz / su" value={(fish.seas || fish.regions).join(", ")} />
+        <Fact label="Şehirler" value={(fish.cities || []).join(", ") || "—"} />
+        <Fact label="Bolluk" value={fish.abundance || "—"} />
       </View>
 
-      <Text style={styles.section}>Besin değerleri (100 g)</Text>
+      <Text style={styles.section}>Besin (100 g)</Text>
       <StatGrid fish={fish} />
 
+      <Text style={styles.section}>Ne ile gider?</Text>
+      <Text style={styles.chips}>{(fish.pairsWith || []).join(" · ")}</Text>
+
+      <Text style={styles.section}>Ne ile kaçınılır?</Text>
+      <Text style={styles.chipsWarn}>{(fish.avoidWith || []).join(" · ")}</Text>
+
+      <Text style={styles.section}>Organ / sistem</Text>
+      {Object.entries(fish.organs || {}).map(([k, note]) => (
+        <View key={k} style={styles.organRow}>
+          <Text style={styles.organTitle}>{ORGAN_LABELS[k] || k}</Text>
+          <Text style={styles.organNote}>{note}</Text>
+        </View>
+      ))}
+
       <BulletSection title="Olası faydalar" items={fish.benefits} tone="good" />
-      <BulletSection
-        title="Dikkat / olası zararlar"
-        items={fish.harms}
-        tone="warn"
-      />
+      <BulletSection title="Dikkat / zararlar" items={fish.harms} tone="warn" />
 
       <View style={styles.tip}>
         <Text style={styles.tipTitle}>Pratik ipucu</Text>
@@ -119,18 +143,8 @@ const styles = StyleSheet.create({
   content: { padding: 16, paddingBottom: 40 },
   missing: { flex: 1, alignItems: "center", justifyContent: "center" },
   missingText: { color: colors.muted, fontSize: 16 },
-  sci: {
-    fontStyle: "italic",
-    color: colors.muted,
-    marginBottom: 10,
-    fontSize: 14,
-  },
-  summary: {
-    fontSize: 16,
-    lineHeight: 24,
-    color: colors.ink,
-    marginBottom: 16,
-  },
+  sci: { fontStyle: "italic", color: colors.muted, marginBottom: 10, fontSize: 14 },
+  summary: { fontSize: 16, lineHeight: 24, color: colors.ink, marginBottom: 16 },
   facts: {
     backgroundColor: colors.surface,
     borderRadius: 16,
@@ -148,7 +162,18 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: colors.ink,
     marginBottom: 10,
+    marginTop: 8,
   },
+  chips: { color: "#2edcc8", marginBottom: 12, lineHeight: 22 },
+  chipsWarn: { color: "#e07a6a", marginBottom: 12, lineHeight: 22 },
+  organRow: {
+    marginBottom: 10,
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: colors.foam || "#E8F6F4",
+  },
+  organTitle: { fontWeight: "800", color: colors.brand, marginBottom: 4 },
+  organNote: { color: colors.ink, lineHeight: 20 },
   tip: {
     marginTop: 16,
     backgroundColor: colors.foam,

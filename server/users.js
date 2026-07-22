@@ -218,6 +218,17 @@ export function cancelPremium(userId) {
   return { ok: true, user: publicUser(user) };
 }
 
+export function deleteUser(userId) {
+  const store = readStore();
+  const before = store.users.length;
+  store.users = store.users.filter((u) => u.id !== userId);
+  if (store.users.length === before) {
+    return { ok: false, error: "Kullanıcı bulunamadı." };
+  }
+  writeStore(store);
+  return { ok: true };
+}
+
 export function listUsersAdmin() {
   return readStore().users.map(publicUser);
 }

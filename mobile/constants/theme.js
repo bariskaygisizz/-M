@@ -13,4 +13,4 @@ export const colors = {
 };
 
 export const DISCLAIMER =
-  "BalıkAtlas bilgilendirme amaçlıdır; tıbbi teşhis, tedavi veya diyet tavsiyesi değildir. Besin değerleri yaklaşıktır (100 g çiğ et ortalaması). Sağlık durumunuz için hekim veya diyetisyene danışın.";
+  "BalıkAtlas bilgilendirme amaçlıdır; tıbbi teşhis, tedavi veya diyet tavsiyesi değildir. Besin değerleri ve organ/sistem notları yaklaşıktır (100 g çiğ et ortalaması). Sağlık durumunuz için hekim veya diyetisyene danışın.";
