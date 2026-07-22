@@ -1,25 +1,42 @@
-export const API_BASE = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001/api';
+import Constants from 'expo-constants';
 
-export const TYPE_COLORS = {
-  Biletmatik: '#2563eb',
-  'Biletmatik 4': '#7c3aed',
-  'Bayi / Dolum Noktası': '#16a34a',
-  'Dolum Merkezi': '#ea580c',
-  Diğer: '#6b7280'
-};
+const hostUri = Constants.expoConfig?.hostUri;
+const lanHost = hostUri ? hostUri.split(':')[0] : null;
 
-export async function fetchMeta() {
-  const res = await fetch(`${API_BASE}/meta`);
-  if (!res.ok) throw new Error('Meta verisi alınamadı');
+export const API_BASE =
+  process.env.EXPO_PUBLIC_API_URL ||
+  (lanHost ? `http://${lanHost}:3001/api` : 'http://localhost:3001/api');
+
+export async function getHome() {
+  const res = await fetch(`${API_BASE}/home`);
+  if (!res.ok) throw new Error('Ev konumu alınamadı');
   return res.json();
 }
 
-export async function fetchLocations(params = {}) {
-  const search = new URLSearchParams();
-  Object.entries(params).forEach(([key, value]) => {
-    if (value != null && value !== '') search.set(key, String(value));
+export async function setHome(payload) {
+  const res = await fetch(`${API_BASE}/home`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
   });
-  const res = await fetch(`${API_BASE}/locations?${search}`);
-  if (!res.ok) throw new Error('Konum verisi alınamadı');
+  if (!res.ok) throw new Error('Ev kaydedilemedi');
+  return res.json();
+}
+
+export async function fetchFlights({ mode = 'simulation', scope = 'both', radiusKm = 80, wideRadiusKm = 900 } = {}) {
+  const params = new URLSearchParams({
+    mode,
+    scope,
+    radiusKm: String(radiusKm),
+    wideRadiusKm: String(wideRadiusKm)
+  });
+  const res = await fetch(`${API_BASE}/flights?${params}`);
+  if (!res.ok) throw new Error('Uçuşlar alınamadı');
+  return res.json();
+}
+
+export async function fetchAbout() {
+  const res = await fetch(`${API_BASE}/about`);
+  if (!res.ok) throw new Error('Bilgi alınamadı');
   return res.json();
 }

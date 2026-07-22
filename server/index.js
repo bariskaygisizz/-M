@@ -1,9 +1,14 @@
 import cors from 'cors';
 import express from 'express';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { FlightSimulator } from './lib/simulator.js';
 import { fetchOpenSkyFlights } from './lib/opensky.js';
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 3001;
+const WEB_DIST = path.join(__dirname, '../web/dist');
 
 const app = express();
 app.use(cors());
@@ -207,9 +212,21 @@ app.get('/api/flights/:id', async (req, res) => {
   res.json(found);
 });
 
+// Serve built web app (phone-friendly single URL)
+if (fs.existsSync(WEB_DIST)) {
+  app.use(express.static(WEB_DIST, { maxAge: '1h', extensions: ['html'] }));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) return next();
+    res.sendFile(path.join(WEB_DIST, 'index.html'));
+  });
+}
+
 app.listen(PORT, () => {
   console.log(`SkyWatch API http://localhost:${PORT}`);
   console.log(
     `Mod: ${state.mode} | Kapsam: ${state.scope} | Ev: ${state.home.lat}, ${state.home.lng}`
   );
+  if (fs.existsSync(WEB_DIST)) {
+    console.log(`Web arayüzü: http://localhost:${PORT}/`);
+  }
 });

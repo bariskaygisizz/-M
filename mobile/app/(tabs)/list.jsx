@@ -1,147 +1,84 @@
 import { useCallback, useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  FlatList,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View
-} from 'react-native';
-import { fetchLocations, fetchMeta } from '../../lib/api';
+import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { fetchFlights } from '../../lib/api';
 
 export default function ListScreen() {
-  const [meta, setMeta] = useState(null);
-  const [locations, setLocations] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [query, setQuery] = useState('');
-  const [selectedTypes, setSelectedTypes] = useState(['Biletmatik', 'Biletmatik 4']);
+  const [flights, setFlights] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState(null);
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async () => {
     try {
-      const params = {
-        type: selectedTypes.join(','),
-        limit: 500
-      };
-      if (query) params.q = query;
-      const [metaData, locData] = await Promise.all([fetchMeta(), fetchLocations(params)]);
-      setMeta(metaData);
-      setLocations(locData.locations);
-    } finally {
-      setLoading(false);
+      const data = await fetchFlights({ scope: 'both' });
+      setFlights(data.flights || []);
+      setError(null);
+    } catch (err) {
+      setError(err.message);
     }
-  }, [selectedTypes, query]);
+  }, []);
 
   useEffect(() => {
-    loadData();
-  }, [loadData]);
-
-  const toggleType = (type) => {
-    setSelectedTypes((prev) =>
-      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
-    );
-  };
+    load();
+    const id = setInterval(load, 2000);
+    return () => clearInterval(id);
+  }, [load]);
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TextInput
-          style={styles.search}
-          placeholder="İlçe veya terminal ara..."
-          value={query}
-          onChangeText={setQuery}
-          onSubmitEditing={loadData}
-        />
-        <View style={styles.chips}>
-          {(meta?.types || ['Biletmatik', 'Biletmatik 4', 'Bayi / Dolum Noktası']).map((type) => (
-            <Pressable
-              key={type}
-              style={[styles.chip, selectedTypes.includes(type) && styles.chipActive]}
-              onPress={() => toggleType(type)}
-            >
-              <Text style={[styles.chipText, selectedTypes.includes(type) && styles.chipTextActive]}>
-                {type}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-        <Pressable style={styles.btn} onPress={loadData}>
-          <Text style={styles.btnText}>Listeyi Güncelle</Text>
-        </Pressable>
-        <Text style={styles.stats}>{locations.length} nokta</Text>
-      </View>
-
-      {loading ? (
-        <ActivityIndicator style={{ marginTop: 24 }} size="large" color="#e30a17" />
-      ) : (
-        <FlatList
-          data={locations}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={{ padding: 12 }}
-          renderItem={({ item }) => (
-            <View style={styles.card}>
-              <Text style={styles.type}>{item.type}</Text>
-              <Text style={styles.title}>{item.district}</Text>
-              {item.address && <Text style={styles.meta}>{item.address}</Text>}
-              {item.terminalId && <Text style={styles.meta}>Terminal: {item.terminalId}</Text>}
-              <Text style={styles.coords}>
-                {item.lat.toFixed(5)}, {item.lng.toFixed(5)}
-              </Text>
+    <View style={styles.root}>
+      {error && <Text style={styles.error}>{error}</Text>}
+      <FlatList
+        data={flights}
+        keyExtractor={(item) => item.id}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={async () => {
+              setRefreshing(true);
+              await load();
+              setRefreshing(false);
+            }}
+            tintColor="#5eb8ff"
+          />
+        }
+        contentContainerStyle={{ padding: 12, gap: 8 }}
+        renderItem={({ item }) => (
+          <View style={styles.card}>
+            <View style={styles.row}>
+              <Text style={styles.zone}>{item.zone === 'near' ? 'Eve yakın' : 'Uzak'}</Text>
+              <Text style={styles.dist}>{item.groundDistanceKm} km</Text>
             </View>
-          )}
-        />
-      )}
+            <Text style={styles.callsign}>{item.callsign}</Text>
+            <Text style={styles.meta}>
+              {(item.origin?.iata || item.origin?.city || '—') +
+                ' → ' +
+                (item.destination?.iata || item.destination?.city || '—')}
+            </Text>
+            <Text style={styles.meta}>
+              {item.groundSpeedKmh} km/s · {item.altitudeFt} ft · {item.category === 'helicopter' ? 'Helikopter' : 'Uçak'}
+            </Text>
+          </View>
+        )}
+        ListEmptyComponent={<Text style={styles.empty}>Trafik yok</Text>}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f4f6f8' },
-  header: {
-    backgroundColor: '#fff',
-    padding: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb'
-  },
-  search: {
+  root: { flex: 1, backgroundColor: '#071018' },
+  card: {
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    borderColor: 'rgba(148,186,214,0.14)',
+    padding: 12,
     marginBottom: 8
   },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 8 },
-  chip: {
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    backgroundColor: '#fff'
-  },
-  chipActive: { backgroundColor: '#e30a17', borderColor: '#e30a17' },
-  chipText: { fontSize: 12, color: '#374151' },
-  chipTextActive: { color: '#fff', fontWeight: '600' },
-  btn: {
-    backgroundColor: '#e30a17',
-    borderRadius: 10,
-    paddingVertical: 10,
-    alignItems: 'center'
-  },
-  btnText: { color: '#fff', fontWeight: '700' },
-  stats: { marginTop: 8, color: '#6b7280', fontSize: 12 },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: '#e5e7eb'
-  },
-  type: { color: '#e30a17', fontWeight: '700', fontSize: 12, marginBottom: 4 },
-  title: { fontSize: 16, fontWeight: '700' },
-  meta: { color: '#6b7280', marginTop: 4, fontSize: 13 },
-  coords: { color: '#9ca3af', marginTop: 6, fontSize: 11 }
+  row: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
+  zone: { color: '#5eb8ff', fontWeight: '700', fontSize: 12, textTransform: 'uppercase' },
+  dist: { color: '#8aa0b5' },
+  callsign: { color: '#e8f1f8', fontSize: 18, fontWeight: '800' },
+  meta: { color: '#8aa0b5', marginTop: 2 },
+  empty: { color: '#8aa0b5', textAlign: 'center', marginTop: 40 },
+  error: { color: '#ffc9c0', padding: 12 }
 });

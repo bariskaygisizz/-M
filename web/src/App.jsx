@@ -34,6 +34,8 @@ export default function App() {
   const [clock, setClock] = useState(() => new Date());
   const [showAbout, setShowAbout] = useState(false);
   const [about, setAbout] = useState(null);
+  const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
+  const [controlsCollapsed, setControlsCollapsed] = useState(true);
 
   const loadConfig = useCallback(async () => {
     const cfg = await getHome();
@@ -221,7 +223,10 @@ export default function App() {
               wideRadiusKm={mapWide}
               flights={flights}
               selectedId={selectedId}
-              onSelect={setSelectedId}
+              onSelect={(id) => {
+                setSelectedId(id);
+                setMobileSheetOpen(true);
+              }}
               pickHomeMode={pickHomeMode}
               onPickHome={handlePickHome}
               followSelected={followSelected}
@@ -229,9 +234,18 @@ export default function App() {
           )}
 
           <div className="hud-left">
-            <div className="hud-panel controls-panel">
+            <div className={`hud-panel controls-panel ${controlsCollapsed ? 'collapsed' : ''}`}>
               <label className="field">
-                <span>Kapsam</span>
+                <span className="mobile-toggle-row">
+                  Kapsam
+                  <button
+                    type="button"
+                    className="about-btn"
+                    onClick={() => setControlsCollapsed((v) => !v)}
+                  >
+                    {controlsCollapsed ? 'Aç' : 'Gizle'}
+                  </button>
+                </span>
                 <div className="seg">
                   {[
                     ['near', 'Ev'],
@@ -357,12 +371,21 @@ export default function App() {
           {error && <div className="toast error">{error}</div>}
         </section>
 
-        <aside className="side">
-          <div className="side-head">
-            <h2>Trafik listesi</h2>
+        <aside className={`side ${mobileSheetOpen ? 'open' : ''}`}>
+          <div
+            className="side-head"
+            onClick={() => setMobileSheetOpen((v) => !v)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') setMobileSheetOpen((v) => !v);
+            }}
+            role="button"
+            tabIndex={0}
+            aria-expanded={mobileSheetOpen}
+          >
+            <h2>Trafik listesi · {loading ? '…' : flights.length}</h2>
             <p>
               {home
-                ? `${home.name} · yakın ${radiusKm} km · bölge ${wideRadiusKm} km`
+                ? `${home.name} · yakın ${radiusKm} km · bölge ${wideRadiusKm} km · dokunarak aç`
                 : 'Yükleniyor…'}
             </p>
           </div>

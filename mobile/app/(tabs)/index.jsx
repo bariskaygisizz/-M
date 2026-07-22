@@ -1,272 +1,188 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View
-} from 'react-native';
-import MapView, { Circle, Marker, PROVIDER_DEFAULT } from 'react-native-maps';
+import { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import MapView, { Circle, Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
-import { fetchLocations, fetchMeta, TYPE_COLORS } from '../../lib/api';
-
-const ISTANBUL_REGION = {
-  latitude: 41.015137,
-  longitude: 28.97953,
-  latitudeDelta: 0.35,
-  longitudeDelta: 0.35
-};
+import { fetchFlights, setHome } from '../../lib/api';
 
 export default function MapScreen() {
-  const mapRef = useRef(null);
-  const [meta, setMeta] = useState(null);
-  const [locations, setLocations] = useState([]);
+  const [home, setHomeState] = useState(null);
+  const [flights, setFlights] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [query, setQuery] = useState('');
-  const [selectedTypes, setSelectedTypes] = useState(['Biletmatik', 'Biletmatik 4']);
   const [selectedId, setSelectedId] = useState(null);
-  const [userLocation, setUserLocation] = useState(null);
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  const load = useCallback(async () => {
     try {
-      const params = {
-        type: selectedTypes.join(','),
-        limit: userLocation ? 300 : 500
-      };
-      if (query) params.q = query;
-      if (userLocation) {
-        params.lat = userLocation.latitude;
-        params.lng = userLocation.longitude;
-        params.radiusKm = 3;
-      }
-
-      const [metaData, locData] = await Promise.all([fetchMeta(), fetchLocations(params)]);
-      setMeta(metaData);
-      setLocations(locData.locations);
+      const data = await fetchFlights({ scope: 'both' });
+      setHomeState(data.home);
+      setFlights(data.flights || []);
+      setError(null);
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
-  }, [selectedTypes, query, userLocation]);
+  }, []);
 
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    load();
+    const id = setInterval(load, 2000);
+    return () => clearInterval(id);
+  }, [load]);
 
-  const selectedLocation = useMemo(
-    () => locations.find((loc) => loc.id === selectedId),
-    [locations, selectedId]
-  );
-
-  const handleLocate = async () => {
+  const useMyLocation = async () => {
     const { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== 'granted') {
-      setError('Konum izni verilmedi.');
+      setError('Konum izni gerekli');
       return;
     }
     const pos = await Location.getCurrentPositionAsync({});
-    const coords = {
-      latitude: pos.coords.latitude,
-      longitude: pos.coords.longitude
-    };
-    setUserLocation(coords);
-    mapRef.current?.animateToRegion({
-      ...coords,
-      latitudeDelta: 0.04,
-      longitudeDelta: 0.04
+    await setHome({
+      lat: pos.coords.latitude,
+      lng: pos.coords.longitude,
+      altM: pos.coords.altitude || 40,
+      name: 'Evim'
     });
+    await load();
   };
 
-  const toggleType = (type) => {
-    setSelectedTypes((prev) =>
-      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
+  const selected = flights.find((f) => f.id === selectedId);
+
+  if (loading && !home) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator color="#5eb8ff" />
+        <Text style={styles.muted}>Yükleniyor…</Text>
+      </View>
     );
-  };
+  }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.filterBar}>
-        <TextInput
-          style={styles.search}
-          placeholder="Ara: ilçe, terminal..."
-          value={query}
-          onChangeText={setQuery}
-          onSubmitEditing={loadData}
-        />
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chips}>
-          {(meta?.types || ['Biletmatik', 'Biletmatik 4']).map((type) => (
-            <Pressable
-              key={type}
-              style={[styles.chip, selectedTypes.includes(type) && styles.chipActive]}
-              onPress={() => toggleType(type)}
-            >
-              <Text style={[styles.chipText, selectedTypes.includes(type) && styles.chipTextActive]}>
-                {type}
-              </Text>
-            </Pressable>
+    <View style={styles.root}>
+      {home && (
+        <MapView
+          style={styles.map}
+          initialRegion={{
+            latitude: home.lat,
+            longitude: home.lng,
+            latitudeDelta: 1.2,
+            longitudeDelta: 1.2
+          }}
+          customMapStyle={darkMap}
+        >
+          <Circle
+            center={{ latitude: home.lat, longitude: home.lng }}
+            radius={80000}
+            strokeColor="#5eb8ff"
+            fillColor="rgba(94,184,255,0.08)"
+          />
+          <Marker
+            coordinate={{ latitude: home.lat, longitude: home.lng }}
+            pinColor="#ff8a5c"
+            title={home.name || 'Ev'}
+          />
+          {flights.map((ac) => (
+            <Marker
+              key={ac.id}
+              coordinate={{ latitude: ac.lat, longitude: ac.lng }}
+              pinColor={ac.category === 'helicopter' ? '#3ecf8e' : '#5eb8ff'}
+              title={ac.callsign}
+              description={`${ac.groundDistanceKm} km · ${ac.groundSpeedKmh} km/s`}
+              onPress={() => setSelectedId(ac.id)}
+            />
           ))}
-        </ScrollView>
-        <View style={styles.actions}>
-          <Pressable style={styles.btn} onPress={loadData}>
-            <Text style={styles.btnText}>Filtrele</Text>
-          </Pressable>
-          <Pressable style={[styles.btn, styles.btnSecondary]} onPress={handleLocate}>
-            <Text style={styles.btnTextSecondary}>Yakınım</Text>
-          </Pressable>
-        </View>
+        </MapView>
+      )}
+
+      <View style={styles.hud}>
+        <Pressable style={styles.btn} onPress={useMyLocation}>
+          <Text style={styles.btnText}>Konumumu ev yap</Text>
+        </Pressable>
+        <Text style={styles.stat}>{flights.length} trafik</Text>
       </View>
 
-      {loading && (
-        <View style={styles.overlay}>
-          <ActivityIndicator size="large" color="#e30a17" />
+      {selected && (
+        <View style={styles.card}>
+          <Text style={styles.callsign}>{selected.callsign}</Text>
+          <Text style={styles.meta}>
+            {selected.origin?.city || '—'} → {selected.destination?.city || '—'}
+          </Text>
+          <Text style={styles.meta}>
+            {selected.groundSpeedKmh} km/s · {selected.altitudeFt} ft · {selected.groundDistanceKm} km
+          </Text>
+          <Text style={styles.privacy}>Yolcu listesi görünmez (ADS-B gizliliği).</Text>
         </View>
       )}
 
       {error && (
-        <View style={styles.errorBox}>
+        <View style={styles.error}>
           <Text style={styles.errorText}>{error}</Text>
-        </View>
-      )}
-
-      <MapView
-        ref={mapRef}
-        style={styles.map}
-        provider={PROVIDER_DEFAULT}
-        initialRegion={ISTANBUL_REGION}
-        showsUserLocation
-        showsMyLocationButton={false}
-      >
-        {userLocation && (
-          <Circle
-            center={userLocation}
-            radius={3000}
-            strokeColor="rgba(227,10,23,0.4)"
-            fillColor="rgba(227,10,23,0.08)"
-          />
-        )}
-
-        {locations.map((loc) => (
-          <Marker
-            key={loc.id}
-            coordinate={{ latitude: loc.lat, longitude: loc.lng }}
-            pinColor={TYPE_COLORS[loc.type] || '#6b7280'}
-            title={loc.type}
-            description={`${loc.district}${loc.terminalId ? ` • ${loc.terminalId}` : ''}`}
-            onPress={() => {
-              setSelectedId(loc.id);
-              mapRef.current?.animateToRegion({
-                latitude: loc.lat,
-                longitude: loc.lng,
-                latitudeDelta: 0.01,
-                longitudeDelta: 0.01
-              });
-            }}
-          />
-        ))}
-      </MapView>
-
-      {selectedLocation && (
-        <View style={styles.detailCard}>
-          <Text style={styles.detailType}>{selectedLocation.type}</Text>
-          <Text style={styles.detailTitle}>{selectedLocation.district}</Text>
-          {selectedLocation.address && (
-            <Text style={styles.detailMeta}>{selectedLocation.address}</Text>
-          )}
-          {selectedLocation.terminalId && (
-            <Text style={styles.detailMeta}>Terminal: {selectedLocation.terminalId}</Text>
-          )}
-          {selectedLocation.distanceKm != null && (
-            <Text style={styles.detailMeta}>{selectedLocation.distanceKm.toFixed(2)} km</Text>
-          )}
         </View>
       )}
     </View>
   );
 }
 
+const darkMap = [
+  { elementType: 'geometry', stylers: [{ color: '#0b1c2c' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#8aa0b5' }] },
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#071018' }] }
+];
+
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f4f6f8' },
-  filterBar: {
-    backgroundColor: '#fff',
-    paddingHorizontal: 12,
-    paddingTop: 8,
-    paddingBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-    zIndex: 2
-  },
-  search: {
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginBottom: 8,
-    backgroundColor: '#fff'
-  },
-  chips: { marginBottom: 8 },
-  chip: {
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    marginRight: 6,
-    backgroundColor: '#fff'
-  },
-  chipActive: { backgroundColor: '#e30a17', borderColor: '#e30a17' },
-  chipText: { fontSize: 12, color: '#374151' },
-  chipTextActive: { color: '#fff', fontWeight: '600' },
-  actions: { flexDirection: 'row', gap: 8 },
-  btn: {
-    flex: 1,
-    backgroundColor: '#e30a17',
-    borderRadius: 10,
-    paddingVertical: 10,
+  root: { flex: 1, backgroundColor: '#071018' },
+  map: { flex: 1 },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#071018' },
+  muted: { color: '#8aa0b5' },
+  hud: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    right: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center'
   },
-  btnSecondary: { backgroundColor: '#eef2f7' },
-  btnText: { color: '#fff', fontWeight: '700' },
-  btnTextSecondary: { color: '#1f2937', fontWeight: '700' },
-  map: { flex: 1 },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 10,
-    backgroundColor: 'rgba(255,255,255,0.35)'
+  btn: {
+    backgroundColor: 'rgba(10,22,34,0.9)',
+    borderColor: 'rgba(148,186,214,0.25)',
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10
   },
-  errorBox: {
+  btnText: { color: '#e8f1f8', fontWeight: '700' },
+  stat: {
+    color: '#e8f1f8',
+    backgroundColor: 'rgba(10,22,34,0.9)',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 12,
+    overflow: 'hidden'
+  },
+  card: {
     position: 'absolute',
-    top: 140,
     left: 12,
     right: 12,
-    backgroundColor: '#fee2e2',
-    padding: 10,
-    borderRadius: 10,
-    zIndex: 11
-  },
-  errorText: { color: '#b91c1c', textAlign: 'center' },
-  detailCard: {
-    position: 'absolute',
-    bottom: 16,
-    left: 12,
-    right: 12,
-    backgroundColor: '#fff',
-    borderRadius: 14,
+    bottom: 18,
+    backgroundColor: 'rgba(10,22,34,0.95)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(148,186,214,0.2)',
     padding: 14,
-    shadowColor: '#000',
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 4
+    gap: 4
   },
-  detailType: { color: '#e30a17', fontWeight: '700', fontSize: 12, marginBottom: 4 },
-  detailTitle: { fontSize: 16, fontWeight: '700', marginBottom: 4 },
-  detailMeta: { color: '#6b7280', fontSize: 13, marginTop: 2 }
+  callsign: { color: '#e8f1f8', fontSize: 20, fontWeight: '800' },
+  meta: { color: '#8aa0b5' },
+  privacy: { color: '#f3e2b0', marginTop: 6, fontSize: 12 },
+  error: {
+    position: 'absolute',
+    bottom: 100,
+    left: 12,
+    right: 12,
+    backgroundColor: 'rgba(80,20,20,0.95)',
+    padding: 12,
+    borderRadius: 12
+  },
+  errorText: { color: '#ffc9c0' }
 });
