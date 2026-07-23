@@ -1,16 +1,20 @@
 export const colors = {
-  bg: "#F3F8F7",
-  surface: "#FFFFFF",
-  ink: "#0B2C34",
-  muted: "#5A7A82",
-  brand: "#084A5C",
-  brandDeep: "#063845",
-  accent: "#2EC4B6",
-  sand: "#E9C46A",
-  danger: "#C45C4A",
-  line: "#D5E6E3",
-  foam: "#E8F6F4",
+  ink: "#14201c",
+  inkSoft: "#24352e",
+  paper: "#e8efe8",
+  foam: "#f4f8f4",
+  sage: "#5f8f78",
+  copper: "#b8794a",
+  muted: "#5e7168",
+  line: "rgba(20,32,28,0.12)",
+  danger: "#b54a3c",
+  white: "#ffffff",
 };
 
-export const DISCLAIMER =
-  "BalıkAtlas bilgilendirme amaçlıdır; tıbbi teşhis, tedavi veya diyet tavsiyesi değildir. Besin değerleri yaklaşıktır (100 g çiğ et ortalaması). Sağlık durumunuz için hekim veya diyetisyene danışın.";
+export const spacing = {
+  xs: 6,
+  sm: 10,
+  md: 16,
+  lg: 24,
+  xl: 32,
+};

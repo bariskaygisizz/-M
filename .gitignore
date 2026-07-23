@@ -1,4 +1,3 @@
-data/users.json
 node_modules/
 dist/
 .expo/
@@ -13,3 +12,5 @@ mobile/.expo/
 *.p8
 *.p12
 *.mobileprovision
+server/data/users.json
+server/data/invitations.json

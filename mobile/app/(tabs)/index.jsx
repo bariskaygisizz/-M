@@ -1,119 +1,111 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   View,
   Text,
-  ScrollView,
   StyleSheet,
   Pressable,
+  ScrollView,
+  I18nManager,
 } from "react-native";
-import { Link } from "expo-router";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { fishList } from "../../data/fish";
-import FishCard from "../../components/FishCard";
-import { colors, DISCLAIMER } from "../../constants/theme";
+import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
+import { colors, spacing } from "../../constants/theme";
+import { loadLocale, t, saveLocale, LOCALES } from "../../lib/i18n";
 
 export default function HomeScreen() {
-  const featured = useMemo(() => fishList.slice(0, 4), []);
-  const lowCal = useMemo(
-    () => [...fishList].sort((a, b) => a.calories - b.calories).slice(0, 3),
-    []
-  );
+  const router = useRouter();
+  const [locale, setLocale] = useState("tr");
+  const tt = (path) => t(locale, path);
+
+  useEffect(() => {
+    loadLocale().then((code) => {
+      setLocale(code);
+      const meta = LOCALES.find((l) => l.code === code);
+      if (meta?.dir === "rtl" && !I18nManager.isRTL) {
+        // RTL flip requires reload in production; keep LTR layout stable in Expo Go
+      }
+    });
+  }, []);
+
+  async function cycleLocale() {
+    const idx = LOCALES.findIndex((l) => l.code === locale);
+    const next = LOCALES[(idx + 1) % LOCALES.length].code;
+    await saveLocale(next);
+    setLocale(next);
+  }
 
   return (
-    <SafeAreaView style={styles.safe} edges={["bottom"]}>
-      <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.hero}>
-          <Text style={styles.brand}>BalıkAtlas</Text>
-          <Text style={styles.headline}>
-            Türkiye’nin balıklarını tanı.
+    <ScrollView contentContainerStyle={styles.wrap}>
+      <LinearGradient
+        colors={["#1c332a", "#2f463b", "#4a3a2e"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.hero}
+      >
+        <Text style={styles.brand}>Davetly</Text>
+        <Text style={styles.tagline}>{tt("tagline")}</Text>
+        <Pressable style={styles.cta} onPress={() => router.push("/(tabs)/templates")}>
+          <Text style={styles.ctaText}>{tt("heroCta")}</Text>
+        </Pressable>
+        <Pressable onPress={cycleLocale} style={styles.langBtn}>
+          <Text style={styles.langText}>
+            {tt("common.language")}: {LOCALES.find((l) => l.code === locale)?.name}
           </Text>
-          <Text style={styles.sub}>
-            Tür, ağırlık, yetiştiği bölge, kalori, fayda ve dikkat edilmesi
-            gerekenler — tek yerde.
-          </Text>
-          <Link href="/(tabs)/browse" asChild>
-            <Pressable style={styles.cta} accessibilityRole="button">
-              <Text style={styles.ctaText}>Balıkları Keşfet</Text>
-            </Pressable>
-          </Link>
-        </View>
+        </Pressable>
+      </LinearGradient>
 
-        <Text style={styles.section}>Öne çıkanlar</Text>
-        {featured.map((f) => (
-          <FishCard key={f.id} fish={f} />
-        ))}
-
-        <Text style={styles.section}>Düşük kalorili seçenekler</Text>
-        {lowCal.map((f) => (
-          <FishCard key={`low-${f.id}`} fish={f} />
-        ))}
-
-        <View style={styles.note}>
-          <Text style={styles.noteText}>{DISCLAIMER}</Text>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+      <View style={styles.section}>
+        <Text style={styles.h2}>{tt("pricing.title")}</Text>
+        <Text style={styles.lead}>{tt("pricing.subtitle")}</Text>
+        <Pressable style={styles.secondary} onPress={() => router.push("/(tabs)/pricing")}>
+          <Text style={styles.secondaryText}>{tt("navPricing")}</Text>
+        </Pressable>
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.bg },
-  content: { padding: 16, paddingBottom: 32 },
+  wrap: { paddingBottom: spacing.xl },
   hero: {
-    backgroundColor: colors.brand,
-    borderRadius: 24,
-    padding: 22,
-    marginBottom: 22,
-    overflow: "hidden",
+    minHeight: 420,
+    padding: spacing.lg,
+    justifyContent: "flex-end",
   },
   brand: {
-    color: colors.accent,
-    fontSize: 28,
-    fontWeight: "800",
-    letterSpacing: -0.5,
-    marginBottom: 8,
-  },
-  headline: {
-    color: "#fff",
-    fontSize: 22,
+    color: colors.foam,
+    fontSize: 52,
     fontWeight: "700",
-    lineHeight: 28,
-    marginBottom: 8,
+    letterSpacing: -1,
+    marginBottom: spacing.sm,
   },
-  sub: {
-    color: "rgba(255,255,255,0.85)",
-    fontSize: 15,
-    lineHeight: 22,
-    marginBottom: 18,
+  tagline: {
+    color: "rgba(244,248,244,0.92)",
+    fontSize: 17,
+    lineHeight: 26,
+    marginBottom: spacing.lg,
+    maxWidth: 320,
   },
   cta: {
-    alignSelf: "flex-start",
-    backgroundColor: colors.accent,
-    paddingHorizontal: 18,
-    paddingVertical: 12,
-    borderRadius: 12,
-  },
-  ctaText: {
-    color: colors.brandDeep,
-    fontWeight: "800",
-    fontSize: 15,
-  },
-  section: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: colors.ink,
-    marginBottom: 12,
-    marginTop: 8,
-  },
-  note: {
-    marginTop: 12,
-    padding: 14,
     backgroundColor: colors.foam,
-    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 22,
+    borderRadius: 999,
+    alignSelf: "flex-start",
   },
-  noteText: {
-    color: colors.muted,
-    fontSize: 12,
-    lineHeight: 18,
+  ctaText: { color: colors.ink, fontWeight: "700" },
+  langBtn: { marginTop: spacing.md },
+  langText: { color: "rgba(244,248,244,0.8)", fontSize: 13 },
+  section: { padding: spacing.lg },
+  h2: { fontSize: 28, fontWeight: "700", color: colors.ink, marginBottom: 8 },
+  lead: { color: colors.muted, lineHeight: 22, marginBottom: spacing.md },
+  secondary: {
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: 999,
+    paddingVertical: 12,
+    paddingHorizontal: 18,
+    alignSelf: "flex-start",
   },
+  secondaryText: { color: colors.ink, fontWeight: "600" },
 });

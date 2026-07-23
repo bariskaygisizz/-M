@@ -1,117 +1,70 @@
-const API = "";
+const API = import.meta.env.VITE_API_URL || "";
 
-function token() {
-  return localStorage.getItem("ba_token") || "";
+function authHeaders() {
+  const token = localStorage.getItem("davetly_token");
+  return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-function authHeaders(extra = {}) {
-  const t = token();
-  return {
-    ...extra,
-    ...(t ? { Authorization: `Bearer ${t}` } : {}),
-  };
+async function request(path, options = {}) {
+  const res = await fetch(`${API}${path}`, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders(),
+      ...(options.headers || {}),
+    },
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(data.error || "generic");
+    err.status = res.status;
+    throw err;
+  }
+  return data;
 }
 
-export function setSession(tok, user) {
-  if (tok) localStorage.setItem("ba_token", tok);
-  if (user) localStorage.setItem("ba_user", JSON.stringify(user));
+export const api = {
+  health: () => request("/api/health"),
+  locales: () => request("/api/locales"),
+  templates: () => request("/api/templates"),
+  plans: () => request("/api/plans"),
+  register: (body) =>
+    request("/api/auth/register", { method: "POST", body: JSON.stringify(body) }),
+  login: (body) =>
+    request("/api/auth/login", { method: "POST", body: JSON.stringify(body) }),
+  me: () => request("/api/me"),
+  deleteMe: () => request("/api/me", { method: "DELETE" }),
+  invitations: () => request("/api/invitations"),
+  createInvitation: (body) =>
+    request("/api/invitations", { method: "POST", body: JSON.stringify(body) }),
+  updateInvitation: (id, body) =>
+    request(`/api/invitations/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+  deleteInvitation: (id) =>
+    request(`/api/invitations/${id}`, { method: "DELETE" }),
+  subscribe: (body) =>
+    request("/api/subscribe", { method: "POST", body: JSON.stringify(body) }),
+  restore: (body) =>
+    request("/api/restore", { method: "POST", body: JSON.stringify(body) }),
+  share: (id) => request(`/api/share/${id}`),
+};
+
+export function setSession(token, user) {
+  if (token) localStorage.setItem("davetly_token", token);
+  if (user) localStorage.setItem("davetly_user", JSON.stringify(user));
 }
 
 export function clearSession() {
-  localStorage.removeItem("ba_token");
-  localStorage.removeItem("ba_user");
+  localStorage.removeItem("davetly_token");
+  localStorage.removeItem("davetly_user");
 }
 
-export function getCachedUser() {
+export function getStoredUser() {
   try {
-    return JSON.parse(localStorage.getItem("ba_user") || "null");
+    return JSON.parse(localStorage.getItem("davetly_user") || "null");
   } catch {
     return null;
   }
-}
-
-export async function register(username, password) {
-  const res = await fetch(`${API}/api/auth/register`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password }),
-  });
-  const json = await res.json();
-  if (!res.ok || !json.ok) throw new Error(json.error || "Kayıt başarısız");
-  setSession(json.token, json.user);
-  return json;
-}
-
-export async function login(username, password) {
-  const res = await fetch(`${API}/api/auth/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password }),
-  });
-  const json = await res.json();
-  if (!res.ok || !json.ok) throw new Error(json.error || "Giriş başarısız");
-  setSession(json.token, json.user);
-  return json;
-}
-
-export async function fetchMe() {
-  const res = await fetch(`${API}/api/me`, { headers: authHeaders() });
-  if (res.status === 401) {
-    clearSession();
-    return null;
-  }
-  const json = await res.json();
-  if (json.user) setSession(token(), json.user);
-  return json.user;
-}
-
-export async function fetchMeta() {
-  const res = await fetch(`${API}/api/meta`);
-  return res.json();
-}
-
-export async function fetchFish({ q = "", region = "Tümü" } = {}) {
-  const params = new URLSearchParams({ q, region });
-  const res = await fetch(`${API}/api/fish?${params}`, {
-    headers: authHeaders(),
-  });
-  if (!res.ok) throw new Error("Balık listesi alınamadı");
-  return res.json();
-}
-
-export async function identifyImage(blob) {
-  const body = new FormData();
-  body.append("image", blob, "scan.jpg");
-  const res = await fetch(`${API}/api/identify`, {
-    method: "POST",
-    headers: authHeaders(),
-    body,
-  });
-  const json = await res.json();
-  if (json.user) setSession(token(), json.user);
-  if (!res.ok || !json.ok) {
-    const err = new Error(json.error || "Tanıma başarısız");
-    err.code = json.code;
-    err.paywall = json.paywall;
-    err.user = json.user;
-    throw err;
-  }
-  return json;
-}
-
-export async function activatePlan(plan) {
-  const res = await fetch(`${API}/api/subscription/activate`, {
-    method: "POST",
-    headers: authHeaders({ "Content-Type": "application/json" }),
-    body: JSON.stringify({ plan, source: "dev", transactionId: `dev_${Date.now()}` }),
-  });
-  const json = await res.json();
-  if (!res.ok || !json.ok) throw new Error(json.error || "Abonelik başarısız");
-  setSession(token(), json.user);
-  return json;
-}
-
-export async function health() {
-  const res = await fetch(`${API}/api/health`);
-  return res.json();
 }
