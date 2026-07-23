@@ -2,6 +2,7 @@
   "name": "davetly",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "description": "Davetly — düğün, sünnet, bale ve etkinlik davetiyeleri (web + mobil + API)",
   "scripts": {
     "server": "npm run start --prefix server",
