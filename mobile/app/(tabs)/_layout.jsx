@@ -1,30 +1,12 @@
 import { Tabs } from "expo-router";
 import { Text, View } from "react-native";
+import { colors } from "../../constants/theme";
 
-const brand = "#2edcc8";
-const muted = "#8a9aa0";
-const bg = "#0a0a0a";
-
-function TabIcon({ letter, focused }) {
+function TabIcon({ label, focused }) {
   return (
-    <View
-      style={{
-        width: 28,
-        height: 28,
-        borderRadius: 8,
-        alignItems: "center",
-        justifyContent: "center",
-        backgroundColor: focused ? "rgba(46,220,200,0.15)" : "transparent",
-      }}
-    >
-      <Text
-        style={{
-          fontSize: 13,
-          fontWeight: "800",
-          color: focused ? brand : muted,
-        }}
-      >
-        {letter}
+    <View style={{ alignItems: "center", minWidth: 64 }}>
+      <Text style={{ color: focused ? colors.sage : colors.muted, fontSize: 11, fontWeight: "700" }}>
+        {label}
       </Text>
     </View>
   );
@@ -34,57 +16,45 @@ export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
-        headerStyle: { backgroundColor: bg },
-        headerTintColor: "#fff",
-        headerTitleStyle: { fontWeight: "700" },
-        tabBarActiveTintColor: brand,
-        tabBarInactiveTintColor: muted,
+        headerStyle: { backgroundColor: colors.paper },
+        headerTintColor: colors.ink,
         tabBarStyle: {
-          backgroundColor: "#111314",
-          borderTopColor: "rgba(255,255,255,0.08)",
+          backgroundColor: colors.foam,
+          borderTopColor: colors.line,
+          height: 64,
+          paddingBottom: 8,
         },
+        tabBarActiveTintColor: colors.sage,
+        tabBarInactiveTintColor: colors.muted,
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
-          title: "Keşfet",
-          tabBarIcon: ({ focused }) => <TabIcon letter="K" focused={focused} />,
+          title: "Davetly",
+          tabBarLabel: "Home",
+          tabBarIcon: ({ focused }) => <TabIcon label="Home" focused={focused} />,
         }}
       />
       <Tabs.Screen
-        name="scan"
+        name="templates"
         options={{
-          title: "AI Tara",
-          tabBarIcon: ({ focused }) => <TabIcon letter="AI" focused={focused} />,
+          title: "Templates",
+          tabBarIcon: ({ focused }) => <TabIcon label="Templates" focused={focused} />,
         }}
       />
       <Tabs.Screen
-        name="browse"
+        name="pricing"
         options={{
-          title: "Atlas",
-          tabBarIcon: ({ focused }) => <TabIcon letter="B" focused={focused} />,
-        }}
-      />
-      <Tabs.Screen
-        name="favorites"
-        options={{
-          title: "Favoriler",
-          tabBarIcon: ({ focused }) => <TabIcon letter="F" focused={focused} />,
-        }}
-      />
-      <Tabs.Screen
-        name="about"
-        options={{
-          title: "Hakkında",
-          tabBarIcon: ({ focused }) => <TabIcon letter="i" focused={focused} />,
+          title: "Pricing",
+          tabBarIcon: ({ focused }) => <TabIcon label="Plans" focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="account"
         options={{
-          title: "Hesap",
-          tabBarIcon: ({ focused }) => <TabIcon letter="@" focused={focused} />,
+          title: "Account",
+          tabBarIcon: ({ focused }) => <TabIcon label="Account" focused={focused} />,
         }}
       />
     </Tabs>

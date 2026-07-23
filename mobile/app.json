@@ -1,57 +1,58 @@
 {
   "expo": {
-    "name": "BalıkAtlas",
-    "slug": "balikatlas",
+    "name": "Davetly",
+    "slug": "davetly",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "scheme": "balikatlas",
-    "primaryColor": "#084A5C",
+    "scheme": "davetly",
+    "primaryColor": "#5f8f78",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#0a0a0a"
+      "backgroundColor": "#e8efe8"
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.bariskaygisiz.balikatlas",
+      "bundleIdentifier": "com.bariskaygisiz.davetly",
       "buildNumber": "1",
       "infoPlist": {
-        "CFBundleDisplayName": "BalıkAtlas",
-        "ITSAppUsesNonExemptEncryption": false,
-        "NSCameraUsageDescription": "Balığı kamerayla tarayıp AI ile tanımak için kamera erişimi gerekir.",
-        "NSPhotoLibraryUsageDescription": "Galeriden balık fotoğrafı seçerek AI tanıma yapmak için gerekir."
+        "CFBundleDisplayName": "Davetly",
+        "ITSAppUsesNonExemptEncryption": false
       },
       "privacyManifests": {
         "NSPrivacyTracking": false,
         "NSPrivacyTrackingDomains": [],
-        "NSPrivacyCollectedDataTypes": [],
+        "NSPrivacyCollectedDataTypes": [
+          {
+            "NSPrivacyCollectedDataType": "NSPrivacyCollectedDataTypeEmailAddress",
+            "NSPrivacyCollectedDataTypeLinked": true,
+            "NSPrivacyCollectedDataTypeTracking": false,
+            "NSPrivacyCollectedDataTypePurposes": [
+              "NSPrivacyCollectedDataTypePurposeAppFunctionality"
+            ]
+          }
+        ],
         "NSPrivacyAccessedAPITypes": []
       }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#0a0a0a"
+        "backgroundColor": "#e8efe8"
       },
-      "package": "com.bariskaygisiz.balikatlas",
-      "versionCode": 1,
-      "permissions": ["CAMERA"]
+      "package": "com.bariskaygisiz.davetly",
+      "versionCode": 1
     },
-    "plugins": [
-      "expo-router",
-      "expo-asset",
-      "expo-font",
-      [
-        "expo-camera",
-        {
-          "cameraPermission": "Balığı kamerayla tarayıp AI ile tanımak için kamera erişimi gerekir."
-        }
-      ]
-    ],
+    "plugins": ["expo-router", "expo-asset", "expo-font"],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "davetly-placeholder"
+      }
     }
   }
 }

@@ -1,130 +1,75 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Constants from "expo-constants";
 
-const DEFAULT = "http://localhost:3001";
-const TOKEN_KEY = "ba_token";
-const USER_KEY = "ba_user";
+const host =
+  Constants.expoConfig?.hostUri?.split(":")?.[0] ||
+  Constants.manifest2?.extra?.expoGo?.debuggerHost?.split(":")?.[0];
 
-function base() {
-  return (process.env.EXPO_PUBLIC_API_URL || DEFAULT).replace(/\/$/, "");
+export const API_URL =
+  process.env.EXPO_PUBLIC_API_URL ||
+  (host ? `http://${host}:3001` : "http://localhost:3001");
+
+async function authHeaders() {
+  const token = await AsyncStorage.getItem("davetly_token");
+  return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-export async function getToken() {
-  return AsyncStorage.getItem(TOKEN_KEY);
+async function request(path, options = {}) {
+  const res = await fetch(`${API_URL}${path}`, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(await authHeaders()),
+      ...(options.headers || {}),
+    },
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(data.error || "generic");
+    err.status = res.status;
+    throw err;
+  }
+  return data;
 }
+
+export const api = {
+  health: () => request("/api/health"),
+  templates: () => request("/api/templates"),
+  plans: () => request("/api/plans"),
+  register: (body) =>
+    request("/api/auth/register", { method: "POST", body: JSON.stringify(body) }),
+  login: (body) =>
+    request("/api/auth/login", { method: "POST", body: JSON.stringify(body) }),
+  me: () => request("/api/me"),
+  deleteMe: () => request("/api/me", { method: "DELETE" }),
+  invitations: () => request("/api/invitations"),
+  createInvitation: (body) =>
+    request("/api/invitations", { method: "POST", body: JSON.stringify(body) }),
+  updateInvitation: (id, body) =>
+    request(`/api/invitations/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+  subscribe: (body) =>
+    request("/api/subscribe", { method: "POST", body: JSON.stringify(body) }),
+  restore: (body) =>
+    request("/api/restore", { method: "POST", body: JSON.stringify(body) }),
+};
 
 export async function setSession(token, user) {
-  if (token) await AsyncStorage.setItem(TOKEN_KEY, token);
-  if (user) await AsyncStorage.setItem(USER_KEY, JSON.stringify(user));
+  if (token) await AsyncStorage.setItem("davetly_token", token);
+  if (user) await AsyncStorage.setItem("davetly_user", JSON.stringify(user));
 }
 
 export async function clearSession() {
-  await AsyncStorage.multiRemove([TOKEN_KEY, USER_KEY]);
+  await AsyncStorage.multiRemove(["davetly_token", "davetly_user"]);
 }
 
-export async function getCachedUser() {
+export async function getStoredUser() {
+  const raw = await AsyncStorage.getItem("davetly_user");
   try {
-    const raw = await AsyncStorage.getItem(USER_KEY);
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
   }
-}
-
-async function authHeaders(extra = {}) {
-  const t = await getToken();
-  return {
-    ...extra,
-    ...(t ? { Authorization: `Bearer ${t}` } : {}),
-  };
-}
-
-export async function register(username, password) {
-  const res = await fetch(`${base()}/api/auth/register`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password }),
-  });
-  const json = await res.json();
-  if (!res.ok || !json.ok) throw new Error(json.error || "Kayıt başarısız");
-  await setSession(json.token, json.user);
-  return json;
-}
-
-export async function login(username, password) {
-  const res = await fetch(`${base()}/api/auth/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password }),
-  });
-  const json = await res.json();
-  if (!res.ok || !json.ok) throw new Error(json.error || "Giriş başarısız");
-  await setSession(json.token, json.user);
-  return json;
-}
-
-export async function fetchMe() {
-  const res = await fetch(`${base()}/api/me`, {
-    headers: await authHeaders(),
-  });
-  if (res.status === 401) {
-    await clearSession();
-    return null;
-  }
-  const json = await res.json();
-  if (json.user) await setSession(await getToken(), json.user);
-  return json.user;
-}
-
-export async function fetchMeta() {
-  const res = await fetch(`${base()}/api/meta`);
-  return res.json();
-}
-
-export async function fetchFish({ q = "", region = "Tümü" } = {}) {
-  const params = new URLSearchParams({ q, region });
-  const res = await fetch(`${base()}/api/fish?${params}`, {
-    headers: await authHeaders(),
-  });
-  if (!res.ok) throw new Error("Liste alınamadı");
-  return res.json();
-}
-
-export async function identifyImage(uri) {
-  const form = new FormData();
-  form.append("image", {
-    uri,
-    name: "scan.jpg",
-    type: "image/jpeg",
-  });
-  const res = await fetch(`${base()}/api/identify`, {
-    method: "POST",
-    headers: await authHeaders(),
-    body: form,
-  });
-  const json = await res.json();
-  if (json.user) await setSession(await getToken(), json.user);
-  if (!res.ok || !json.ok) {
-    const err = new Error(json.error || "Tanıma başarısız");
-    err.code = json.code;
-    err.paywall = json.paywall;
-    err.user = json.user;
-    throw err;
-  }
-  return json;
-}
-
-export async function activatePlan(plan) {
-  const res = await fetch(`${base()}/api/subscription/activate`, {
-    method: "POST",
-    headers: await authHeaders({ "Content-Type": "application/json" }),
-    body: JSON.stringify({
-      plan,
-      source: "dev",
-      transactionId: `dev_${Date.now()}`,
-    }),
-  });
-  const json = await res.json();
-  if (!res.ok || !json.ok) throw new Error(json.error || "Abonelik başarısız");
-  await setSession(await getToken(), json.user);
-  return json;
 }

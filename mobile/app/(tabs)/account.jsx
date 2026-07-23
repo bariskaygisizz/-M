@@ -2,236 +2,223 @@ import { useEffect, useState } from "react";
 import {
   View,
   Text,
+  StyleSheet,
   TextInput,
   Pressable,
-  StyleSheet,
   ScrollView,
-  ActivityIndicator,
+  Alert,
+  Linking,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
+import { colors, spacing } from "../../constants/theme";
 import {
-  login,
-  register,
-  fetchMe,
-  fetchMeta,
-  activatePlan,
+  api,
+  setSession,
   clearSession,
-  getCachedUser,
+  getStoredUser,
 } from "../../lib/api";
+import { loadLocale, t } from "../../lib/i18n";
 
 export default function AccountScreen() {
+  const router = useRouter();
+  const [locale, setLocale] = useState("tr");
   const [user, setUser] = useState(null);
-  const [mode, setMode] = useState("login");
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [plans, setPlans] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [invites, setInvites] = useState([]);
+  const tt = (path) => t(locale, path);
 
-  const refresh = async () => {
-    setLoading(true);
-    const cached = await getCachedUser();
-    setUser(cached);
-    const me = await fetchMe();
-    setUser(me);
-    const meta = await fetchMeta().catch(() => null);
-    setPlans(meta?.plans || []);
-    setLoading(false);
-  };
+  async function refresh() {
+    const stored = await getStoredUser();
+    setUser(stored);
+    if (stored) {
+      try {
+        const me = await api.me();
+        setUser(me.user);
+        await setSession(undefined, me.user);
+        const list = await api.invitations();
+        setInvites(list.invitations || []);
+      } catch {
+        await clearSession();
+        setUser(null);
+      }
+    }
+  }
 
   useEffect(() => {
+    loadLocale().then(setLocale);
     refresh();
   }, []);
 
-  const onAuth = async () => {
-    setBusy(true);
-    setError("");
+  async function auth(mode) {
     try {
-      const fn = mode === "login" ? login : register;
-      const json = await fn(username.trim(), password);
-      setUser(json.user);
-    } catch (err) {
-      setError(err.message || "Hata");
-    } finally {
-      setBusy(false);
+      const fn = mode === "register" ? api.register : api.login;
+      const data = await fn({ email, password, locale });
+      await setSession(data.token, data.user);
+      setUser(data.user);
+      await refresh();
+    } catch (e) {
+      Alert.alert(tt("errors.auth"), e.message);
     }
-  };
-
-  const onBuy = async (planId) => {
-    setBusy(true);
-    setError("");
-    try {
-      const json = await activatePlan(planId);
-      setUser(json.user);
-    } catch (err) {
-      setError(err.message || "Satın alma hatası");
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator color="#2edcc8" />
-      </View>
-    );
   }
 
-  if (!user) {
-    return (
-      <SafeAreaView style={styles.safe} edges={["bottom"]}>
-        <ScrollView contentContainerStyle={styles.content}>
-          <Text style={styles.title}>
-            {mode === "login" ? "Giriş Yap" : "Kayıt Ol"}
+  async function logout() {
+    await clearSession();
+    setUser(null);
+    setInvites([]);
+  }
+
+  async function deleteAccount() {
+    Alert.alert(tt("account.deleteAccount"), tt("account.deleteConfirm"), [
+      { text: tt("common.cancel"), style: "cancel" },
+      {
+        text: tt("account.deleteAccount"),
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await api.deleteMe();
+            await logout();
+          } catch (e) {
+            Alert.alert(tt("errors.generic"), e.message);
+          }
+        },
+      },
+    ]);
+  }
+
+  return (
+    <ScrollView contentContainerStyle={styles.wrap}>
+      <Text style={styles.h2}>{tt("account.title")}</Text>
+
+      {user ? (
+        <>
+          <Text style={styles.meta}>
+            {tt("account.email")}: {user.email}
           </Text>
-          <Text style={styles.sub}>
-            Abonelik ve tarama hakların kullanıcı adına bağlanır.
+          <Text style={styles.meta}>
+            {tt("account.plan")}: {tt(`pricing.${user.plan || "free"}`)}
           </Text>
+          <Pressable style={styles.btnOutline} onPress={logout}>
+            <Text style={styles.btnOutlineText}>{tt("account.logout")}</Text>
+          </Pressable>
+          {/* App Store: account deletion required */}
+          <Pressable style={styles.btnDanger} onPress={deleteAccount}>
+            <Text style={styles.btnDangerText}>{tt("account.deleteAccount")}</Text>
+          </Pressable>
+
+          <Text style={styles.h3}>{tt("account.invites")}</Text>
+          {invites.length === 0 ? (
+            <Text style={styles.lead}>{tt("account.empty")}</Text>
+          ) : (
+            invites.map((inv) => (
+              <Pressable
+                key={inv.id}
+                style={styles.row}
+                onPress={() =>
+                  router.push({
+                    pathname: "/editor",
+                    params: { invitationId: inv.id, templateId: inv.templateId },
+                  })
+                }
+              >
+                <Text style={styles.rowTitle}>{inv.title || tt("editor.inviteGuest")}</Text>
+                <Text style={styles.lead}>{tt(`categories.${inv.category}`)}</Text>
+              </Pressable>
+            ))
+          )}
+        </>
+      ) : (
+        <View style={styles.form}>
+          <Text style={styles.label}>{tt("account.email")}</Text>
           <TextInput
             style={styles.input}
-            placeholder="Kullanıcı adı"
-            placeholderTextColor="#8a9aa0"
             autoCapitalize="none"
-            value={username}
-            onChangeText={setUsername}
+            keyboardType="email-address"
+            value={email}
+            onChangeText={setEmail}
           />
+          <Text style={styles.label}>{tt("account.password")}</Text>
           <TextInput
             style={styles.input}
-            placeholder="Şifre"
-            placeholderTextColor="#8a9aa0"
             secureTextEntry
             value={password}
             onChangeText={setPassword}
           />
-          {error ? <Text style={styles.error}>{error}</Text> : null}
-          <Pressable style={styles.cta} onPress={onAuth} disabled={busy}>
-            <Text style={styles.ctaText}>
-              {busy ? "Bekle…" : mode === "login" ? "Giriş" : "Kayıt Ol"}
-            </Text>
+          <Pressable style={styles.btn} onPress={() => auth("login")}>
+            <Text style={styles.btnText}>{tt("account.login")}</Text>
           </Pressable>
-          <Pressable
-            style={[styles.cta, styles.ghost]}
-            onPress={() => setMode((m) => (m === "login" ? "register" : "login"))}
-          >
-            <Text style={[styles.ctaText, { color: "#2edcc8" }]}>
-              {mode === "login" ? "Hesap oluştur" : "Girişe dön"}
-            </Text>
+          <Pressable style={styles.btnOutline} onPress={() => auth("register")}>
+            <Text style={styles.btnOutlineText}>{tt("account.register")}</Text>
           </Pressable>
-        </ScrollView>
-      </SafeAreaView>
-    );
-  }
+        </View>
+      )}
 
-  return (
-    <SafeAreaView style={styles.safe} edges={["bottom"]}>
-      <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}>@{user.username}</Text>
-        <Text style={styles.meta}>Plan: {user.plan}</Text>
-        {user.plan === "free" ? (
-          <Text style={styles.sub}>
-            Kalan AI tarama: {user.scansLeft}/{user.scanLimit}
-          </Text>
-        ) : (
-          <Text style={styles.sub}>
-            Premium
-            {user.premiumUntil
-              ? ` · bitiş ${new Date(user.premiumUntil).toLocaleDateString("tr-TR")}`
-              : ""}
-          </Text>
-        )}
-
-        <Text style={styles.section}>Freemium Abonelikler</Text>
-        {plans
-          .filter((p) => p.id !== "free")
-          .map((p) => (
-            <View key={p.id} style={styles.plan}>
-              <Text style={styles.planName}>{p.name}</Text>
-              <Text style={styles.meta}>{p.price}</Text>
-              {(p.features || []).map((f) => (
-                <Text key={f} style={styles.bullet}>
-                  + {f}
-                </Text>
-              ))}
-              <Pressable
-                style={styles.cta}
-                disabled={busy || user.plan === "premium"}
-                onPress={() => onBuy(p.id)}
-              >
-                <Text style={styles.ctaText}>
-                  {user.plan === "premium" ? "Aktif" : "Abone Ol"}
-                </Text>
-              </Pressable>
-            </View>
-          ))}
-
-        {error ? <Text style={styles.error}>{error}</Text> : null}
-
-        <Pressable
-          style={[styles.cta, styles.ghost]}
-          onPress={async () => {
-            await clearSession();
-            setUser(null);
-          }}
-        >
-          <Text style={[styles.ctaText, { color: "#2edcc8" }]}>Çıkış Yap</Text>
+      <View style={styles.links}>
+        <Pressable onPress={() => router.push("/privacy")}>
+          <Text style={styles.link}>{tt("navPrivacy")}</Text>
         </Pressable>
-      </ScrollView>
-    </SafeAreaView>
+        <Pressable onPress={() => router.push("/terms")}>
+          <Text style={styles.link}>{tt("navTerms")}</Text>
+        </Pressable>
+        <Pressable onPress={() => Linking.openURL("mailto:kaygisizbaris9@gmail.com")}>
+          <Text style={styles.link}>Support</Text>
+        </Pressable>
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: "#0a0a0a" },
-  content: { padding: 16, paddingBottom: 40 },
-  center: {
-    flex: 1,
-    backgroundColor: "#0a0a0a",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  title: { color: "#fff", fontSize: 26, fontWeight: "800", marginBottom: 8 },
-  sub: { color: "#8a9aa0", marginBottom: 14, lineHeight: 20 },
-  meta: { color: "#7cf0e0", fontWeight: "700", marginBottom: 6 },
-  section: {
-    color: "#fff",
-    fontWeight: "800",
-    fontSize: 18,
-    marginTop: 18,
-    marginBottom: 10,
-  },
+  wrap: { padding: spacing.lg, gap: spacing.sm, paddingBottom: 48 },
+  h2: { fontSize: 28, fontWeight: "700", color: colors.ink, marginBottom: 8 },
+  h3: { fontSize: 18, fontWeight: "700", color: colors.ink, marginTop: 16 },
+  meta: { color: colors.inkSoft, marginBottom: 4 },
+  lead: { color: colors.muted },
+  form: { gap: 8 },
+  label: { color: colors.muted, fontWeight: "600", fontSize: 13 },
   input: {
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.12)",
+    borderColor: colors.line,
     borderRadius: 12,
     padding: 12,
-    color: "#fff",
-    marginBottom: 10,
-    backgroundColor: "#111314",
+    backgroundColor: "rgba(255,255,255,0.8)",
+    marginBottom: 8,
   },
-  cta: {
-    backgroundColor: "#2edcc8",
-    borderRadius: 14,
-    paddingVertical: 14,
+  btn: {
+    backgroundColor: colors.sage,
+    borderRadius: 999,
+    paddingVertical: 12,
+    alignItems: "center",
+    marginTop: 4,
+  },
+  btnText: { color: colors.white, fontWeight: "700" },
+  btnOutline: {
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: 999,
+    paddingVertical: 12,
     alignItems: "center",
     marginTop: 8,
   },
-  ghost: {
-    backgroundColor: "transparent",
+  btnOutlineText: { color: colors.ink, fontWeight: "600" },
+  btnDanger: {
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.12)",
+    borderColor: colors.danger,
+    borderRadius: 999,
+    paddingVertical: 12,
+    alignItems: "center",
+    marginTop: 8,
   },
-  ctaText: { color: "#041014", fontWeight: "800" },
-  error: { color: "#e07a6a", marginTop: 8 },
-  plan: {
+  btnDangerText: { color: colors.danger, fontWeight: "700" },
+  row: {
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.1)",
-    borderRadius: 16,
-    padding: 14,
-    marginBottom: 12,
-    backgroundColor: "rgba(18,22,24,0.9)",
+    borderColor: colors.line,
+    borderRadius: 14,
+    padding: 12,
+    backgroundColor: "rgba(255,255,255,0.65)",
+    marginTop: 8,
   },
-  planName: { color: "#fff", fontWeight: "800", fontSize: 18 },
-  bullet: { color: "#e8eef0", marginTop: 4 },
+  rowTitle: { fontWeight: "700", color: colors.ink },
+  links: { marginTop: 24, gap: 12 },
+  link: { color: colors.copper, fontWeight: "600" },
 });
